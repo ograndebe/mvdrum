@@ -1,13 +1,13 @@
 # mvdrum
 Minimum Viable Drum (Using Arduino)
 
-###English
+##English
     This project proposes to be a simple drum midi controller using arduino.
     The idea is keep it simple, create your own simple and cheap box that solves your problem.
     _for now, we will not provide electronic part documentation, it's easy to deduct reading the Arduino Documentation._
     _for midi USB, buy a cheap Chinese Midi USB cable, it's easy e cheap._
 
-###Português
+##Português
     Este projeto se propõe a ser um controlador midi simples usando arduino.
     A ideia é mante-lo simples, crie sua caixinha simples e barata que resolve seu problema.
     _Por enquanto, não disponibilizaremos documentação da parte eletrônica, é fácil de deduzir lendo a documentação do Arduino_
