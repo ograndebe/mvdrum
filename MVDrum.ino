@@ -1,12 +1,5 @@
 #include <EEPROM.h>
 
-/*
-Parameters
-*/
-const int MIDI_CMD_NOTE_ON = 0x90; //note on channel 01
-const int KNOCK_THRESHOLD = 100;  
-const int MAX_MIDI_VELOCITY = 127;
-
 /*Drum note Map*/
 const int ACOUSTIC_BASS_DRUM = 35;  
 //const int BASS_DRUM_1        = 36;  
@@ -56,6 +49,14 @@ const int RIDE_CYMBAL_2      = 59;
 //const int MUTE_TRIANGLE      = 80;  
 //const int OPEN_TRIANGLE      = 81;
 
+
+/*
+Parameters
+*/
+const int MIDI_CMD_NOTE_ON = 0x90; //note on channel 01
+const int KNOCK_THRESHOLD = 100;  
+const int MAX_MIDI_VELOCITY = 127;
+
 const int IDX_ANALOG_INPUT = 0;
 const int IDX_LAST_KNOCK_BUFFER = 1;
 const int IDX_NOTE = 2;
@@ -80,8 +81,11 @@ const int IDX_HI_HAT_CLOSED = IDX_HI_HAT_OPENED+1;
 const int IDX_HI_HAT_PEDAL = IDX_HI_HAT_CLOSED+1;
 
 const int HI_HAT_SWITCH = 2;
-const int MINUS_SWITCH = 3;
-const int PLUS_SWITCH = 4;
+const int UP_SWITCH = 3;
+const int DOWN_SWITCH = 4;
+
+const unsigned long LONG_PRESS_SIZE = 2000;
+const int LED_PIN =  LED_BUILTIN;
 
 /*Variables*/
 int sensorReading = 0;   
@@ -90,7 +94,10 @@ int switchState = 0;
 int lastHiHatPosition = LOW;
 byte temporaryValue = 0;
 char currentMode = 'P';
-unsigned long time;
+unsigned long upTimer = 0;
+unsigned long downTimer = 0;
+boolean upActive = false;
+boolean downActive = false;
 
 void setup() {
     // Set MIDI baud rate:
@@ -100,15 +107,17 @@ void setup() {
     pinMode(MINUS_SWITCH, INPUT);
     pinMode(PLUS_SWITCH, INPUT);
 
-    //read last saved NOTES
-    for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
-        temporaryValue = EEPROM.read(idx);
-        CONF_MATRIX_SIZE[idx][IDX_NOTE] = temporaryValue;
-    }
+    // //read last saved NOTES
+    // for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
+    //     temporaryValue = EEPROM.read(idx);
+    //     CONF_MATRIX_SIZE[idx][IDX_NOTE] = temporaryValue;
+    // }
 
 }
 
 void loop() {
+    checkButtons();
+    
     // if (digitalRead(MINUS_SWITCH) == HIGH) {
     //     if (time == 0) time = millis();
     //     else {
@@ -125,6 +134,74 @@ void loop() {
         }
     }
     handleHiHat();
+}
+
+void checkButtons() {
+    if(digitalRead(UP_SWITCH) == HIGH) {
+        if (upActive == false) {
+            upActive = true;
+            upTimer = millis();
+        }    
+    } else {
+        if (upActive == true) {
+            if (upTimer >= LONG_PRESS_SIZE) {
+                upLongPress();
+            } else {
+                upShortPress();
+            }
+            upActive = false;
+            upTimer = 0;
+        }
+    }
+    if(digitalRead(DOWN_SWITCH) == HIGH) {
+        if (downActive == false) {
+            downActive = true;
+            downTimer = millis();
+        }    
+    } else {
+        if (downActive == true) {
+            if (downTimer >= LONG_PRESS_SIZE && upTimer >= LONG_PRESS_SIZE) {
+                doubleLongPress();
+            } else if (downTimer >= LONG_PRESS_SIZE) {
+                downLongPress();
+            } else {
+                downShortPress();
+            }
+            downActive = false;
+            downTimer = 0;
+            upActive = false;
+            upTimer = 0;
+        }
+    }
+}
+
+
+void upLongPress() {
+    if (currentMode == 'P') {
+        currentMode = 'L';
+        digitalWrite(LED_PIN, HIGH);
+    } else {
+        currentMode = 'P';
+        digitalWrite(LED_PIN, LOW);
+    }
+}
+
+void upShortPress() {
+    if (currentMode == 'P') {
+        //TODO adicionar um a nota corrente
+    }
+}
+
+void doubleLongPress() {
+
+}
+
+void downLongPress() {
+
+}
+
+void downShortPress() {
+
 }
 
 void handleHiHat() {
