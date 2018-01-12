@@ -1,58 +1,17 @@
 #include <EEPROM.h>
 
-/*Drum note Map*/
-const int ACOUSTIC_BASS_DRUM = 35;  
-//const int BASS_DRUM_1        = 36;  
-//const int SIDE_STICK         = 37;  
-const int ACOUSTIC_SNARE     = 38;  
-//const int HAND_CLAP          = 39;  
-//const int ELECTRIC_SNARE     = 40;  
-//const int LOW_FLOOR_TOM      = 41;  
-const int CLOSED_HI_HAT      = 42;  
-//const int HIGH_FLOOR_TOM     = 43;  
-const int PEDAL_HI_HAT       = 44;  
-//const int LOW_TOM            = 45;  
-const int OPEN_HI_HAT        = 46;  
-//const int LOW_MID_TOM        = 47;  
-//const int HI_MID_TOM         = 48;  
-const int CRASH_CYMBAL_1     = 49;  
-const int HIGH_TOM           = 50;  
-//const int RIDE_CYMBAL_1      = 51;  
-//const int CHINESE_CYMBAL     = 52;  
-//const int RIDE_BELL          = 53;  
-//const int TAMBOURINE         = 54;  
-//const int SPLASH_CYMBAL      = 55;  
-//const int COWBELL            = 56;  
-const int CRASH_CYMBAL_2     = 57;  
-//const int VIBRASLAP          = 58;  
-const int RIDE_CYMBAL_2      = 59;  
-//const int HI_BONGO           = 60;  
-//const int LOW_BONGO          = 61;  
-//const int MUTE_HI_CONGA      = 62;  
-//const int OPEN_HI_CONGA      = 63;  
-//const int LOW_CONGA          = 64;  
-//const int HIGH_TIMBALE       = 65;  
-//const int LOW_TIMBALE        = 66;  
-//const int HIGH_AGOGO         = 67;  
-//const int LOW_AGOGO          = 68;  
-//const int CABASA             = 69;  
-//const int MARACAS            = 70;  
-//const int SHORT_WHISTLE      = 71;  
-//const int LONG_WHISTLE       = 72;  
-//const int SHORT_GUIRO        = 73;  
-//const int LONG_GUIRO         = 74;  
-//const int CLAVES             = 75;  
-//const int HI_WOOD_BLOCK      = 76;  
-//const int LOW_WOOD_BLOCK     = 77;  
-//const int MUTE_CUICA         = 78;  
-//const int OPEN_CUICA         = 79;  
-//const int MUTE_TRIANGLE      = 80;  
-//const int OPEN_TRIANGLE      = 81;
+/*######## IMPORTANT ############*/
+/*Change what setup you want HERE*/
+/*######## IMPORTANT ############*/
+#define SETUP_A
+//#define SETUP_C
+
 
 
 /*
 Parameters
 */
+/*Below sensive parameters, be careful*/
 const int MIDI_CMD_NOTE_ON = 0x90; //note on channel 01
 const int KNOCK_THRESHOLD = 100;  
 const int MAX_MIDI_VELOCITY = 127;
@@ -61,21 +20,52 @@ const int IDX_ANALOG_INPUT = 0;
 const int IDX_LAST_KNOCK_BUFFER = 1;
 const int IDX_NOTE = 2;
 /*Array to define witch note associated with each drum note*/
+
+#if defined(SETUP_A)
+const int CONF_MATRIX_SIZE = 10; 
 int CONF_MATRIX [10][3] {
-    //{IDX_ANALOG_INPUT, IDX_NOTE}
-    {A0,0,ACOUSTIC_BASS_DRUM}, 
-    {A1,0,ACOUSTIC_SNARE    }, 
-    {A2,0,ACOUSTIC_SNARE    }, 
-    {A3,0,HIGH_TOM          }, 
-    {A4,0,CRASH_CYMBAL_1    }, 
-    {A5,0,RIDE_CYMBAL_2     }, 
-    {A6,0,CRASH_CYMBAL_2    }, 
-    {A7,0,OPEN_HI_HAT       },
-    {A7,0,CLOSED_HI_HAT     },
-    {A7,0,PEDAL_HI_HAT      }
+    //{IDX_ANALOG_INPUT, IDX_LAST_KNOCK_BUFFER, IDX_NOTE}
+    {A0,0,0}, 
+    {A1,0,0}, 
+    {A2,0,0}, 
+    {A3,0,0}, 
+    {A4,0,0}, 
+    {A5,0,0}, 
+    {A6,0,0}, 
+    {A7,0,0},
+    {A7,0,0},
+    {A7,0,0}
 };
-const int CONF_MATRIX_SIZE = 10;
 const int ANALOG_INPUTS_SIZE = 7; //not run last analog input
+#endif
+#if defined( SETUP_C)
+const int CONF_MATRIX_SIZE = 18; 
+int CONF_MATRIX [18][3] {
+    //{IDX_ANALOG_INPUT, IDX_LAST_KNOCK_BUFFER, IDX_NOTE}
+    {A0,0,0}, 
+    {A1,0,0}, 
+    {A2,0,0}, 
+    {A3,0,0}, 
+    {A4,0,0}, 
+    {A5,0,0}, 
+    {A6,0,0}, 
+    {A7,0,0}, 
+    {A8,0,0}, 
+    {A9,0,0}, 
+    {A10,0,0}, 
+    {A11,0,0}, 
+    {A12,0,0}, 
+    {A13,0,0}, 
+    {A14,0,0}, 
+    {A15,0,0}, 
+    {A16,0,0},
+    {A16,0,0},
+    {A16,0,0}
+};
+const int ANALOG_INPUTS_SIZE = 15; //not run last analog input
+#endif
+
+
 const int IDX_HI_HAT_OPENED = ANALOG_INPUTS_SIZE; 
 const int IDX_HI_HAT_CLOSED = IDX_HI_HAT_OPENED+1; 
 const int IDX_HI_HAT_PEDAL = IDX_HI_HAT_CLOSED+1;
@@ -90,53 +80,41 @@ const int LED_PIN =  LED_BUILTIN;
 /*Variables*/
 int sensorReading = 0;   
 int calcVelocity = 0;
-int switchState = 0;
+
+/*HiHat*/
+int hiHatSwitchState = 0;
 int lastHiHatPosition = LOW;
-byte temporaryValue = 0;
-char currentMode = 'P';
+
+/*Learn Mode*/
+char currentMode = 'P'; // [P]lay [L]earn
+int lastPlayedIndex = 0;
 unsigned long upTimer = 0;
 unsigned long downTimer = 0;
 boolean upActive = false;
 boolean downActive = false;
+int currentNote = 0;
 
 void setup() {
     // Set MIDI baud rate:
     Serial.begin(31250);
     // setup hi_hat switch
     pinMode(HI_HAT_SWITCH, INPUT);
-    pinMode(MINUS_SWITCH, INPUT);
-    pinMode(PLUS_SWITCH, INPUT);
+    pinMode(DOWN_SWITCH, INPUT);
+    pinMode(UP_SWITCH, INPUT);
 
-    // //read last saved NOTES
-    // for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
-    //     temporaryValue = EEPROM.read(idx);
-    //     CONF_MATRIX_SIZE[idx][IDX_NOTE] = temporaryValue;
-    // }
-
+    //read last saved NOTES
+    for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
+        CONF_MATRIX[idx][IDX_NOTE] = EEPROM.read(idx);
+    }
 }
 
 void loop() {
-    checkButtons();
-    
-    // if (digitalRead(MINUS_SWITCH) == HIGH) {
-    //     if (time == 0) time = millis();
-    //     else {
-    //         if (time )
-    //     }
-    // } else {
-    //     time = 0;
-    // }
-    //scan arbitrary instruments
-    for (int analogInput = 0; analogInput < ANALOG_INPUTS_SIZE; analogInput++) {
-        calcVelocity = detectKnock(analogInput);
-        if (calcVelocity > 0) {
-            noteOn(CONF_MATRIX[analogInput][IDX_NOTE], calcVelocity);
-        }
-    }
+    handleModeButtons();
+    handleSensors();
     handleHiHat();
 }
 
-void checkButtons() {
+void handleModeButtons() {
     if(digitalRead(UP_SWITCH) == HIGH) {
         if (upActive == false) {
             upActive = true;
@@ -187,40 +165,67 @@ void upLongPress() {
 }
 
 void upShortPress() {
-    if (currentMode == 'P') {
-        //TODO adicionar um a nota corrente
+    if (currentMode == 'L') {
+        currentNote = CONF_MATRIX[lastPlayedIndex][IDX_NOTE];
+        currentNote++;
+        if (currentNote > 127) currentNote = 0;
+        CONF_MATRIX[lastPlayedIndex][IDX_NOTE] = currentNote;
+        noteOn(currentNote, MAX_MIDI_VELOCITY);
+    }
+}
+
+void downShortPress() {
+    if (currentMode == 'L') {
+        currentNote = CONF_MATRIX[lastPlayedIndex][IDX_NOTE];
+        currentNote--;
+        if (currentNote < 0) currentNote = 127;
+        CONF_MATRIX[lastPlayedIndex][IDX_NOTE] = currentNote;
+        noteOn(currentNote, MAX_MIDI_VELOCITY);
     }
 }
 
 void doubleLongPress() {
-
+    //write current selected notes
+    for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
+        EEPROM.update(idx, CONF_MATRIX[idx][IDX_NOTE]);
+    }
 }
 
 void downLongPress() {
-
+    //None for now
 }
 
-void downShortPress() {
 
+void handleSensors() {
+    for (int analogInput = 0; analogInput < ANALOG_INPUTS_SIZE; analogInput++) {
+        calcVelocity = detectKnock(analogInput);
+        if (calcVelocity > 0) {
+            lastPlayedIndex = analogInput;
+            noteOn(CONF_MATRIX[analogInput][IDX_NOTE], calcVelocity);
+        }
+    }
 }
 
 void handleHiHat() {
     //handle hi-hat
     calcVelocity = detectKnock(IDX_HI_HAT_OPENED);
     if (calcVelocity > 0) {
-        switchState = digitalRead(HI_HAT_SWITCH);
-        if (switchState == HIGH) {
+        hiHatSwitchState = digitalRead(HI_HAT_SWITCH);
+        if (hiHatSwitchState == HIGH) {
+            lastPlayedIndex = IDX_HI_HAT_CLOSED;
             noteOn(CONF_MATRIX[IDX_HI_HAT_CLOSED][IDX_NOTE], calcVelocity);
         } else {
+            lastPlayedIndex = IDX_HI_HAT_OPENED;
             noteOn(CONF_MATRIX[IDX_HI_HAT_OPENED][IDX_NOTE], calcVelocity);
         }
     }
     
-    if (lastHiHatPosition != switchState) {
+    if (lastHiHatPosition != hiHatSwitchState) {
+        lastPlayedIndex = IDX_HI_HAT_PEDAL;
         noteOn(CONF_MATRIX[IDX_HI_HAT_PEDAL][IDX_NOTE], MAX_MIDI_VELOCITY); //no velocity
     }
 
-    lastHiHatPosition = switchState;
+    lastHiHatPosition = hiHatSwitchState;
 }
 
 void noteOn(int pitch, int velocity) {
