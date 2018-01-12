@@ -33,10 +33,10 @@ Minimum Viable Drum (Using Arduino)
     -Change de BuiltIn led to another Led
 
 ## Helpful links (electronic)
-    * [LED Blink](https://www.arduino.cc/en/Tutorial/Blink)
-    * [Push Button](https://www.arduino.cc/en/Tutorial/Button)
-    * [MIDI Out] (https://www.arduino.cc/en/Tutorial/Midi)
-    * [Piezo Sensor] (https://www.arduino.cc/en/Tutorial/Knock)
+    [LED Blink](https://www.arduino.cc/en/Tutorial/Blink)
+    [Push Button](https://www.arduino.cc/en/Tutorial/Button)
+    [MIDI Out] (https://www.arduino.cc/en/Tutorial/Midi)
+    [Piezo Sensor] (https://www.arduino.cc/en/Tutorial/Knock)
 
 ## Blueprint
 ![Blueprint](docs/blueprint.png)
