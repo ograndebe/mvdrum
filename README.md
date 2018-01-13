@@ -28,11 +28,6 @@ Minimum Viable Drum (Using Arduino)
 1. Use up/down buttons and the next/previous notes will be played and selected
 1. Press up and down button simutaneously for 2 seconds to store selected notes.
 
-## In Development
-* Use analog input for half HiHat
-* Change de BuiltIn led to another Led
-* Implement NOC (NoteOffCapacity) for Cymbals Crash Break
-
 ## Helpful links (electronic)
 [LED Blink](https://www.arduino.cc/en/Tutorial/Blink)
 [Push Button](https://www.arduino.cc/en/Tutorial/Button)

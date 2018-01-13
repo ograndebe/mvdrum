@@ -3,18 +3,23 @@
 /*######## IMPORTANT ############*/
 /*Change what setup you want HERE*/
 /*######## IMPORTANT ############*/
-#define SETUP_A
-//#define SETUP_C
-
-
+// #define SETUP_A
+// #define SETUP_B
+// #define SETUP_C
+#define SETUP_D
 
 /*
 Parameters
 */
 /*Below sensive parameters, be careful*/
 const int MIDI_CMD_NOTE_ON = 0x90; //note on channel 01
-const int KNOCK_THRESHOLD = 100;  
+const int KNOCK_THRESHOLD = 100;  //sensor range 0 to 1023
 const int MAX_MIDI_VELOCITY = 127;
+const unsigned long LONG_PRESS_SIZE = 2000; // milliseconds
+/*Any value between this below will be half hi-hat*/
+const int ANALOG_HI_HAT_LOW_LIMIT = 100;
+const int ANALOG_HI_HAT_HIGH_LIMIT = 900;
+const unsigned long ANALOG_HI_HAT_PEDAL_TIME = 500; // milliseconds
 
 const int IDX_ANALOG_INPUT = 0;
 const int IDX_LAST_KNOCK_BUFFER = 1;
@@ -32,11 +37,30 @@ int CONF_MATRIX [10][3] {
     {A4,0,0}, 
     {A5,0,0}, 
     {A6,0,0}, 
-    {A7,0,0},
-    {A7,0,0},
-    {A7,0,0}
+    {A7,0,0}, //IDX_HI_HAT_OPENED
+    {A7,0,0}, //IDX_HI_HAT_CLOSED
+    {A7,0,0}  //IDX_HI_HAT_PEDAL
 };
-const int ANALOG_INPUTS_SIZE = 7; //not run last analog input
+const int ANALOG_INPUTS_SIZE_TO_SCAN = 7; //not run last analog input
+const boolean HAS_ANALOG_HIHAT = false;
+#endif
+#if defined(SETUP_B)
+const int CONF_MATRIX_SIZE = 11; 
+int CONF_MATRIX [10][3] {
+    //{IDX_ANALOG_INPUT, IDX_LAST_KNOCK_BUFFER, IDX_NOTE}
+    {A0,0,0}, 
+    {A1,0,0}, 
+    {A2,0,0}, 
+    {A3,0,0}, 
+    {A4,0,0}, 
+    {A5,0,0}, 
+    {A7,0,0}, //IDX_HI_HAT_OPENED
+    {A7,0,0}, //IDX_HI_HAT_CLOSED
+    {A6,0,0}, //IDX_HI_HAT_PEDAL
+    {A7,0,0}  //IDX_HI_HAT_HALF
+};
+const int ANALOG_INPUTS_SIZE_TO_SCAN = 6; //not run last analog input
+const boolean HAS_ANALOG_HIHAT = true;
 #endif
 #if defined( SETUP_C)
 const int CONF_MATRIX_SIZE = 18; 
@@ -56,26 +80,54 @@ int CONF_MATRIX [18][3] {
     {A11,0,0}, 
     {A12,0,0}, 
     {A13,0,0}, 
-    {A14,0,0}, 
-    {A15,0,0}, 
-    {A16,0,0},
-    {A16,0,0},
-    {A16,0,0}
+    {A14,0,0},  
+    {A15,0,0}, //IDX_HI_HAT_OPENED
+    {A15,0,0}, //IDX_HI_HAT_CLOSED
+    {A15,0,0}  //IDX_HI_HAT_PEDAL
 };
-const int ANALOG_INPUTS_SIZE = 15; //not run last analog input
+const int ANALOG_INPUTS_SIZE_TO_SCAN = 15; //not run last analog input
+const boolean HAS_ANALOG_HIHAT = false;
+#endif
+#if defined(SETUP_D)
+const int CONF_MATRIX_SIZE = 11; 
+int CONF_MATRIX [18][3] {
+    //{IDX_ANALOG_INPUT, IDX_LAST_KNOCK_BUFFER, IDX_NOTE}
+    {A0,0,0}, 
+    {A1,0,0}, 
+    {A2,0,0}, 
+    {A3,0,0}, 
+    {A4,0,0}, 
+    {A5,0,0}, 
+    {A6,0,0}, 
+    {A7,0,0}, 
+    {A8,0,0}, 
+    {A9,0,0}, 
+    {A10,0,0}, 
+    {A11,0,0}, 
+    {A12,0,0}, 
+    {A13,0,0},  
+    {A15,0,0}, //IDX_HI_HAT_OPENED
+    {A15,0,0}, //IDX_HI_HAT_CLOSED
+    {A14,0,0}, //IDX_HI_HAT_PEDAL
+    {A15,0,0}  //IDX_HI_HAT_HALF
+};
+const int ANALOG_INPUTS_SIZE_TO_SCAN = 14; //not run last analog input
+const boolean HAS_ANALOG_HIHAT = true;
 #endif
 
-
-const int IDX_HI_HAT_OPENED = ANALOG_INPUTS_SIZE; 
+const int IDX_HI_HAT_OPENED = ANALOG_INPUTS_SIZE_TO_SCAN; 
 const int IDX_HI_HAT_CLOSED = IDX_HI_HAT_OPENED+1; 
 const int IDX_HI_HAT_PEDAL = IDX_HI_HAT_CLOSED+1;
+const int IDX_HI_HAT_HALF = IDX_HI_HAT_PEDAL+1;
 
-const int HI_HAT_SWITCH = 2;
-const int UP_SWITCH = 3;
-const int DOWN_SWITCH = 4;
-
-const unsigned long LONG_PRESS_SIZE = 2000;
-const int LED_PIN =  LED_BUILTIN;
+/*led, buttons and switches configuration*/
+const int UP_BUTTON = 1;
+const int DOWN_BUTTON = 2;
+const int LED_PIN = LED_BUILTIN; //D13
+const int SENSOR_1_NOC = 4;
+const int SENSOR_2_NOC = 5;
+const int SENSOR_3_NOC = 6;
+const int HI_HAT_SWITCH = 7;
 
 /*Variables*/
 int sensorReading = 0;   
@@ -84,6 +136,16 @@ int calcVelocity = 0;
 /*HiHat*/
 int hiHatSwitchState = 0;
 int lastHiHatPosition = LOW;
+int analogHiHatPosition = 100;
+unsigned long analogHiHatOpenedTime = 0;
+
+/*NoteOff Capacity*/
+int NOC_MATRIX[3][2] {
+    {SENSOR_1_NOC,0},
+    {SENSOR_2_NOC,0},
+    {SENSOR_3_NOC,0}
+};
+int NOC_MATRIX_SIZE = 3;
 
 /*Learn Mode*/
 char currentMode = 'P'; // [P]lay [L]earn
@@ -99,8 +161,8 @@ void setup() {
     Serial.begin(31250);
     // setup hi_hat switch
     pinMode(HI_HAT_SWITCH, INPUT);
-    pinMode(DOWN_SWITCH, INPUT);
-    pinMode(UP_SWITCH, INPUT);
+    pinMode(DOWN_BUTTON, INPUT);
+    pinMode(UP_BUTTON, INPUT);
 
     //read last saved NOTES
     for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
@@ -112,10 +174,24 @@ void loop() {
     handleModeButtons();
     handleSensors();
     handleHiHat();
+    handleNOC();
+}
+
+void handleNOC() {
+    for (int idx = 0; idx < NOC_MATRIX_SIZE; idx++) {
+        sensorReading = digitalRead(NOC_MATRIX[idx][0]);
+        if (sensorReading != NOC_MATRIX[idx][1]) {
+            if (sensorReading == HIGH) {
+                //NoteOff
+                noteOn(CONF_MATRIX[idx][IDX_NOTE], 0); //first 3 analog inputs
+            }
+            NOC_MATRIX[idx][1] = sensorReading;
+        }
+    }
 }
 
 void handleModeButtons() {
-    if(digitalRead(UP_SWITCH) == HIGH) {
+    if(digitalRead(UP_BUTTON) == HIGH) {
         if (upActive == false) {
             upActive = true;
             upTimer = millis();
@@ -131,7 +207,7 @@ void handleModeButtons() {
             upTimer = 0;
         }
     }
-    if(digitalRead(DOWN_SWITCH) == HIGH) {
+    if(digitalRead(DOWN_BUTTON) == HIGH) {
         if (downActive == false) {
             downActive = true;
             downTimer = millis();
@@ -193,11 +269,12 @@ void doubleLongPress() {
 
 void downLongPress() {
     //None for now
+    downShortPress();
 }
 
 
 void handleSensors() {
-    for (int analogInput = 0; analogInput < ANALOG_INPUTS_SIZE; analogInput++) {
+    for (int analogInput = 0; analogInput < ANALOG_INPUTS_SIZE_TO_SCAN; analogInput++) {
         calcVelocity = detectKnock(analogInput);
         if (calcVelocity > 0) {
             lastPlayedIndex = analogInput;
@@ -207,17 +284,40 @@ void handleSensors() {
 }
 
 void handleHiHat() {
+    if (HAS_ANALOG_HIHAT == true) {
+        sensorReading = analogRead(CONF_MATRIX[IDX_HI_HAT_PEDAL][IDX_ANALOG_INPUT]);
+        if (sensorReading <= ANALOG_HI_HAT_LOW_LIMIT) {
+            //closed
+            if (analogHiHatPosition != 0 && analogHiHatOpenedTime <= ANALOG_HI_HAT_PEDAL_TIME) {
+                //Note on
+                lastPlayedIndex = IDX_HI_HAT_PEDAL;
+                //calculate velocity based how fastest the hi-hat is closed
+                calcVelocity = int((float(analogHiHatOpenedTime)/float(ANALOG_HI_HAT_PEDAL_TIME))*127.0);
+                noteOn(CONF_MATRIX[lastPlayedIndex][IDX_NOTE], calcVelocity);
+            }
+            analogHiHatPosition = 0;
+        } else if (sensorReading <= ANALOG_HI_HAT_HIGH_LIMIT) {
+            //half
+            analogHiHatPosition = 1;
+        } else {
+            //opened
+            analogHiHatPosition = 2;
+            analogHiHatOpenedTime = millis();
+        }
+    }
+
     //handle hi-hat
     calcVelocity = detectKnock(IDX_HI_HAT_OPENED);
     if (calcVelocity > 0) {
         hiHatSwitchState = digitalRead(HI_HAT_SWITCH);
-        if (hiHatSwitchState == HIGH) {
+        if (hiHatSwitchState == HIGH || analogHiHatPosition == 0) {
             lastPlayedIndex = IDX_HI_HAT_CLOSED;
-            noteOn(CONF_MATRIX[IDX_HI_HAT_CLOSED][IDX_NOTE], calcVelocity);
-        } else {
+        } else if (hiHatSwitchState == LOW || analogHiHatPosition == 2){
             lastPlayedIndex = IDX_HI_HAT_OPENED;
-            noteOn(CONF_MATRIX[IDX_HI_HAT_OPENED][IDX_NOTE], calcVelocity);
+        } else if (analogHiHatPosition == 1) {
+            lastPlayedIndex = IDX_HI_HAT_HALF;
         }
+        noteOn(CONF_MATRIX[lastPlayedIndex][IDX_NOTE], calcVelocity);
     }
     
     if (lastHiHatPosition != hiHatSwitchState) {
