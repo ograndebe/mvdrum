@@ -124,9 +124,9 @@ const int IDX_HI_HAT_HALF = IDX_HI_HAT_PEDAL+1;
 const int UP_BUTTON = 1;
 const int DOWN_BUTTON = 2;
 const int LED_PIN = LED_BUILTIN; //D13
-const int SENSOR_1_NOC = 4;
-const int SENSOR_2_NOC = 5;
-const int SENSOR_3_NOC = 6;
+const int SENSOR_1_CHOKE = 4;
+const int SENSOR_2_CHOKE = 5;
+const int SENSOR_3_CHOKE = 6;
 const int HI_HAT_SWITCH = 7;
 
 /*Variables*/
@@ -140,12 +140,12 @@ int analogHiHatPosition = 100;
 unsigned long analogHiHatOpenedTime = 0;
 
 /*NoteOff Capacity*/
-int NOC_MATRIX[3][2] {
-    {SENSOR_1_NOC,0},
-    {SENSOR_2_NOC,0},
-    {SENSOR_3_NOC,0}
+int CHOKE_MATRIX[3][2] {
+    {SENSOR_1_CHOKE,0},
+    {SENSOR_2_CHOKE,0},
+    {SENSOR_3_CHOKE,0}
 };
-int NOC_MATRIX_SIZE = 3;
+int CHOKE_MATRIX_SIZE = 3;
 
 /*Learn Mode*/
 char currentMode = 'P'; // [P]lay [L]earn
@@ -160,9 +160,12 @@ void setup() {
     // Set MIDI baud rate:
     Serial.begin(31250);
     // setup hi_hat switch
-    pinMode(HI_HAT_SWITCH, INPUT);
-    pinMode(DOWN_BUTTON, INPUT);
-    pinMode(UP_BUTTON, INPUT);
+    pinMode(HI_HAT_SWITCH, INPUT_PULLUP);
+    pinMode(DOWN_BUTTON, INPUT_PULLUP);
+    pinMode(UP_BUTTON, INPUT_PULLUP);
+    pinMode(SENSOR_1_CHOKE, INPUT_PULLUP);
+    pinMode(SENSOR_2_CHOKE, INPUT_PULLUP);
+    pinMode(SENSOR_3_CHOKE, INPUT_PULLUP);
 
     //read last saved NOTES
     for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
@@ -174,24 +177,24 @@ void loop() {
     handleModeButtons();
     handleSensors();
     handleHiHat();
-    handleNOC();
+    handleCHOKE();
 }
 
-void handleNOC() {
-    for (int idx = 0; idx < NOC_MATRIX_SIZE; idx++) {
-        sensorReading = digitalRead(NOC_MATRIX[idx][0]);
-        if (sensorReading != NOC_MATRIX[idx][1]) {
-            if (sensorReading == HIGH) {
+void handleCHOKE() {
+    for (int idx = 0; idx < CHOKE_MATRIX_SIZE; idx++) {
+        sensorReading = digitalRead(CHOKE_MATRIX[idx][0]);
+        if (sensorReading != CHOKE_MATRIX[idx][1]) {
+            if (sensorReading == LOW) {
                 //NoteOff
                 noteOn(CONF_MATRIX[idx][IDX_NOTE], 0); //first 3 analog inputs
             }
-            NOC_MATRIX[idx][1] = sensorReading;
+            CHOKE_MATRIX[idx][1] = sensorReading;
         }
     }
 }
 
 void handleModeButtons() {
-    if(digitalRead(UP_BUTTON) == HIGH) {
+    if(digitalRead(UP_BUTTON) == LOW) {
         if (upActive == false) {
             upActive = true;
             upTimer = millis();
@@ -207,7 +210,7 @@ void handleModeButtons() {
             upTimer = 0;
         }
     }
-    if(digitalRead(DOWN_BUTTON) == HIGH) {
+    if(digitalRead(DOWN_BUTTON) == LOW) {
         if (downActive == false) {
             downActive = true;
             downTimer = millis();
@@ -310,9 +313,9 @@ void handleHiHat() {
     calcVelocity = detectKnock(IDX_HI_HAT_OPENED);
     if (calcVelocity > 0) {
         hiHatSwitchState = digitalRead(HI_HAT_SWITCH);
-        if (hiHatSwitchState == HIGH || analogHiHatPosition == 0) {
+        if (hiHatSwitchState == LOW || analogHiHatPosition == 0) {
             lastPlayedIndex = IDX_HI_HAT_CLOSED;
-        } else if (hiHatSwitchState == LOW || analogHiHatPosition == 2){
+        } else if (hiHatSwitchState == HIGH || analogHiHatPosition == 2){
             lastPlayedIndex = IDX_HI_HAT_OPENED;
         } else if (analogHiHatPosition == 1) {
             lastPlayedIndex = IDX_HI_HAT_HALF;
