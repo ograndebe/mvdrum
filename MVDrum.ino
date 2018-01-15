@@ -121,8 +121,8 @@ const int IDX_HI_HAT_PEDAL = IDX_HI_HAT_CLOSED+1;
 const int IDX_HI_HAT_HALF = IDX_HI_HAT_PEDAL+1;
 
 /*led, buttons and switches configuration*/
-const int UP_BUTTON = 1;
-const int DOWN_BUTTON = 2;
+const int UP_BUTTON = 2;
+const int DOWN_BUTTON = 3;
 const int LED_PIN = LED_BUILTIN; //D13
 const int SENSOR_1_CHOKE = 4;
 const int SENSOR_2_CHOKE = 5;
@@ -160,6 +160,7 @@ void setup() {
     // Set MIDI baud rate:
     Serial.begin(31250);
     // setup hi_hat switch
+    pinMode(LED_PIN, OUTPUT);
     pinMode(HI_HAT_SWITCH, INPUT_PULLUP);
     pinMode(DOWN_BUTTON, INPUT_PULLUP);
     pinMode(UP_BUTTON, INPUT_PULLUP);
