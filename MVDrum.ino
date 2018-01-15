@@ -160,6 +160,7 @@ void setup() {
     // Set MIDI baud rate:
     Serial.begin(31250);
     // setup hi_hat switch
+    pinMode(LED_PIN, OUTPUT);
     pinMode(HI_HAT_SWITCH, INPUT_PULLUP);
     pinMode(DOWN_BUTTON, INPUT_PULLUP);
     pinMode(UP_BUTTON, INPUT_PULLUP);
