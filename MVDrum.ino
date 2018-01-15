@@ -26,108 +26,34 @@ const int IDX_LAST_KNOCK_BUFFER = 1;
 const int IDX_NOTE = 2;
 /*Array to define witch note associated with each drum note*/
 
-#if defined(SETUP_A)
-const int CONF_MATRIX_SIZE = 10; 
-int CONF_MATRIX [10][3] {
-    //{IDX_ANALOG_INPUT, IDX_LAST_KNOCK_BUFFER, IDX_NOTE}
-    {A0,0,0}, 
-    {A1,0,0}, 
-    {A2,0,0}, 
-    {A3,0,0}, 
-    {A4,0,0}, 
-    {A5,0,0}, 
-    {A6,0,0}, 
-    {A7,0,0}, //IDX_HI_HAT_OPENED
-    {A7,0,0}, //IDX_HI_HAT_CLOSED
-    {A7,0,0}  //IDX_HI_HAT_PEDAL
-};
-const int ANALOG_INPUTS_SIZE_TO_SCAN = 7; //not run last analog input
-const boolean HAS_ANALOG_HIHAT = false;
-#endif
-#if defined(SETUP_B)
-const int CONF_MATRIX_SIZE = 11; 
-int CONF_MATRIX [10][3] {
-    //{IDX_ANALOG_INPUT, IDX_LAST_KNOCK_BUFFER, IDX_NOTE}
-    {A0,0,0}, 
-    {A1,0,0}, 
-    {A2,0,0}, 
-    {A3,0,0}, 
-    {A4,0,0}, 
-    {A5,0,0}, 
-    {A7,0,0}, //IDX_HI_HAT_OPENED
-    {A7,0,0}, //IDX_HI_HAT_CLOSED
-    {A6,0,0}, //IDX_HI_HAT_PEDAL
-    {A7,0,0}  //IDX_HI_HAT_HALF
-};
-const int ANALOG_INPUTS_SIZE_TO_SCAN = 6; //not run last analog input
-const boolean HAS_ANALOG_HIHAT = true;
-#endif
-#if defined( SETUP_C)
-const int CONF_MATRIX_SIZE = 18; 
-int CONF_MATRIX [18][3] {
-    //{IDX_ANALOG_INPUT, IDX_LAST_KNOCK_BUFFER, IDX_NOTE}
-    {A0,0,0}, 
-    {A1,0,0}, 
-    {A2,0,0}, 
-    {A3,0,0}, 
-    {A4,0,0}, 
-    {A5,0,0}, 
-    {A6,0,0}, 
-    {A7,0,0}, 
-    {A8,0,0}, 
-    {A9,0,0}, 
-    {A10,0,0}, 
-    {A11,0,0}, 
-    {A12,0,0}, 
-    {A13,0,0}, 
-    {A14,0,0},  
-    {A15,0,0}, //IDX_HI_HAT_OPENED
-    {A15,0,0}, //IDX_HI_HAT_CLOSED
-    {A15,0,0}  //IDX_HI_HAT_PEDAL
-};
-const int ANALOG_INPUTS_SIZE_TO_SCAN = 15; //not run last analog input
-const boolean HAS_ANALOG_HIHAT = false;
-#endif
-#if defined(SETUP_D)
-const int CONF_MATRIX_SIZE = 11; 
-int CONF_MATRIX [18][3] {
-    //{IDX_ANALOG_INPUT, IDX_LAST_KNOCK_BUFFER, IDX_NOTE}
-    {A0,0,0}, 
-    {A1,0,0}, 
-    {A2,0,0}, 
-    {A3,0,0}, 
-    {A4,0,0}, 
-    {A5,0,0}, 
-    {A6,0,0}, 
-    {A7,0,0}, 
-    {A8,0,0}, 
-    {A9,0,0}, 
-    {A10,0,0}, 
-    {A11,0,0}, 
-    {A12,0,0}, 
-    {A13,0,0},  
-    {A15,0,0}, //IDX_HI_HAT_OPENED
-    {A15,0,0}, //IDX_HI_HAT_CLOSED
-    {A14,0,0}, //IDX_HI_HAT_PEDAL
-    {A15,0,0}  //IDX_HI_HAT_HALF
-};
-const int ANALOG_INPUTS_SIZE_TO_SCAN = 14; //not run last analog input
-const boolean HAS_ANALOG_HIHAT = true;
-#endif
+/*########### DEV #################*/
+const int IDX_TYPE = 3;
+const int IDX_SWITCH = 4;
+const int TYPE_NORMAL           = 10;
+const int TYPE_HIHAT            = 20;
+const int TYPE_HIHAT_CC_PEDAL   = 30;
+const int TYPE_HIHAT_3P_PEDAL   = 40;
 
-const int IDX_HI_HAT_OPENED = ANALOG_INPUTS_SIZE_TO_SCAN; 
-const int IDX_HI_HAT_CLOSED = IDX_HI_HAT_OPENED+1; 
-const int IDX_HI_HAT_PEDAL = IDX_HI_HAT_CLOSED+1;
-const int IDX_HI_HAT_HALF = IDX_HI_HAT_PEDAL+1;
+const int CONF_MATRIX_SIZE = 8; 
+int CONF_MATRIX [8][5] {
+//  {IDX_ANALOG_INPUT, IDX_LAST_KNOCK_BUFFER, IDX_NOTE, IDX_TYPE,    IDX_SWITCH}
+    {A0              , 0                    , 0       , TYPE_HIHAT , 7},
+    {A1              , 0                    , 0       , TYPE_NORMAL, 0},
+    {A2              , 0                    , 0       , TYPE_NORMAL, 0},
+    {A3              , 0                    , 0       , TYPE_NORMAL, 0},
+    {A4              , 0                    , 0       , TYPE_NORMAL, 0},
+    {A5              , 0                    , 0       , TYPE_NORMAL, 4},
+    {A6              , 0                    , 0       , TYPE_NORMAL, 5},
+    {A7              , 0                    , 0       , TYPE_NORMAL, 6},
+};
+
+const int THREE_PHASE_HIHAT [3] {50,51,52};
+/*########### DEV #################*/
 
 /*led, buttons and switches configuration*/
 const int UP_BUTTON = 2;
 const int DOWN_BUTTON = 3;
 const int LED_PIN = LED_BUILTIN; //D13
-const int SENSOR_1_CHOKE = 4;
-const int SENSOR_2_CHOKE = 5;
-const int SENSOR_3_CHOKE = 6;
-const int HI_HAT_SWITCH = 7;
 
 /*Variables*/
 int sensorReading = 0;   
@@ -138,14 +64,6 @@ int hiHatSwitchState = 0;
 int lastHiHatPosition = LOW;
 int analogHiHatPosition = 100;
 unsigned long analogHiHatOpenedTime = 0;
-
-/*NoteOff Capacity*/
-int CHOKE_MATRIX[3][2] {
-    {SENSOR_1_CHOKE,0},
-    {SENSOR_2_CHOKE,0},
-    {SENSOR_3_CHOKE,0}
-};
-int CHOKE_MATRIX_SIZE = 3;
 
 /*Learn Mode*/
 char currentMode = 'P'; // [P]lay [L]earn
@@ -161,37 +79,74 @@ void setup() {
     Serial.begin(31250);
     // setup hi_hat switch
     pinMode(LED_PIN, OUTPUT);
-    pinMode(HI_HAT_SWITCH, INPUT_PULLUP);
     pinMode(DOWN_BUTTON, INPUT_PULLUP);
     pinMode(UP_BUTTON, INPUT_PULLUP);
-    pinMode(SENSOR_1_CHOKE, INPUT_PULLUP);
-    pinMode(SENSOR_2_CHOKE, INPUT_PULLUP);
-    pinMode(SENSOR_3_CHOKE, INPUT_PULLUP);
-
+    
     //read last saved NOTES
     for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
-        CONF_MATRIX[idx][IDX_NOTE] = EEPROM.read(idx);
+        currentNote = EEPROM.read(idx);
+        if (currentNote != 0) { //only reads if != 0 for default values
+            CONF_MATRIX[idx][IDX_NOTE] = currentNote-1;
+        }
     }
 }
 
 void loop() {
     handleModeButtons();
+
+    for (int analogInput = 0; analogInput < CONF_MATRIX_SIZE; analogInput++) {
+        int type = CONF_MATRIX[analogInput][IDX_TYPE];
+        if ( type == TYPE_NORMAL || type == TYPE_HIHAT) {
+            calcVelocity = detectKnock(analogInput);
+            if (calcVelocity > 0) {
+                if (type == TYPE_NORMAL) {
+                    handleNormalPad(analogInput, calcVelocity);
+                } else {
+                    handleSimpleHiHat(analogInput, calcVelocity);
+                }
+            } else {
+                //TODO handleChoke();
+            }
+        } else {
+            calcVelocity = readAnalog(analogInput);
+            if (type == TYPE_HIHAT_CC_PEDAL) {
+                handleHihatCCPedal()
+            } else {
+
+            }
+        }
+    }
+
     handleSensors();
     handleHiHat();
     handleCHOKE();
 }
 
-void handleCHOKE() {
-    for (int idx = 0; idx < CHOKE_MATRIX_SIZE; idx++) {
-        sensorReading = digitalRead(CHOKE_MATRIX[idx][0]);
-        if (sensorReading != CHOKE_MATRIX[idx][1]) {
-            if (sensorReading == LOW) {
-                //NoteOff
-                noteOn(CONF_MATRIX[idx][IDX_NOTE], 0); //first 3 analog inputs
-            }
-            CHOKE_MATRIX[idx][1] = sensorReading;
-        }
+void handleNormalPad(int idx, int velocity) {
+    lastPlayedIndex = idx;
+    noteOn(CONF_MATRIX[idx][IDX_NOTE], velocity);
+}
+
+void handleSimpleHiHat(int idx, int velocity) {
+    lastPlayedIndex = idx;
+
+    hiHatSwitchState = digitalRead(CONF_MATRIX[idx][IDX_SWITCH]);
+    if(hiHatSwitchState == LOW) {
+        //on
+        noteOn(THREE_PHASE_HIHAT[2], velocity);
+    } else {
+        //off
+        noteOn(THREE_PHASE_HIHAT[0], velocity);
     }
+
+    if (lastHiHatPosition != hiHatSwitchState) {
+        noteOn(THREE_PHASE_HIHAT[1], MAX_MIDI_VELOCITY); //no velocity
+    }
+    lastHiHatPosition = hiHatSwitchState;
+}
+
+void handleHihatCCPedal(int idx, int paramValue) {
+    //TODO send control change
 }
 
 void handleModeButtons() {
@@ -229,6 +184,19 @@ void handleModeButtons() {
             downTimer = 0;
             upActive = false;
             upTimer = 0;
+        }
+    }
+}
+
+void handleCHOKE() {
+    for (int idx = 0; idx < CHOKE_MATRIX_SIZE; idx++) {
+        sensorReading = digitalRead(CHOKE_MATRIX[idx][0]);
+        if (sensorReading != CHOKE_MATRIX[idx][1]) {
+            if (sensorReading == LOW) {
+                //NoteOff
+                noteOn(CONF_MATRIX[idx][IDX_NOTE], 0); //first 3 analog inputs
+            }
+            CHOKE_MATRIX[idx][1] = sensorReading;
         }
     }
 }
@@ -341,6 +309,17 @@ void noteOn(int pitch, int velocity) {
 int detectKnock(int analogInputIdx) {
     sensorReading = analogRead(CONF_MATRIX[analogInputIdx][IDX_ANALOG_INPUT]);
     if (sensorReading >= KNOCK_THRESHOLD && CONF_MATRIX[analogInputIdx][IDX_LAST_KNOCK_BUFFER] < sensorReading) {
+        CONF_MATRIX[analogInputIdx][IDX_LAST_KNOCK_BUFFER] = sensorReading; // store last reading for knock only if value is greater
+        return int ((float(sensorReading)/1023.0)*127.0); //convert from 0 to 1023 range to 0 to 127 range
+    } else {
+        CONF_MATRIX[analogInputIdx][IDX_LAST_KNOCK_BUFFER] = sensorReading; // store last reading for knock only if value is greater
+        return 0;
+    }
+}
+
+int readAnalog(int analogInputIdx) {
+    sensorReading = analogRead(CONF_MATRIX[analogInputIdx][IDX_ANALOG_INPUT]);
+    if (sensorReading >= KNOCK_THRESHOLD) {
         CONF_MATRIX[analogInputIdx][IDX_LAST_KNOCK_BUFFER] = sensorReading; // store last reading for knock only if value is greater
         return int ((float(sensorReading)/1023.0)*127.0); //convert from 0 to 1023 range to 0 to 127 range
     } else {
