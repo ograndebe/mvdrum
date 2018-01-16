@@ -84,7 +84,7 @@ void setup() {
     //read last saved NOTES
     for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
         currentNote = EEPROM.read(idx);
-        if (currentNote != 0) { //only reads if != 0 for default values
+        if (currentNote != 0 && currentNote >= 1 && currentNote <= 128) { //only reads if != 0 for default values
             CONF_MATRIX[idx][IDX_NOTE] = currentNote-1;
         }
         if (CONF_MATRIX[idx][IDX_SWITCH] != 0) {
@@ -93,7 +93,9 @@ void setup() {
     }
     for (int idx = 0; idx < 4; idx++) {
          currentNote = EEPROM.read(idx+20);
-         if (currentNote != 0) THREE_PHASE_HIHAT_NOTES[idx] = currentNote-1;
+         if (currentNote != 0 && currentNote >= 1 && currentNote <= 128) { 
+             THREE_PHASE_HIHAT_NOTES[idx] = currentNote-1;
+         }         
     }
 }
 
@@ -171,6 +173,10 @@ void handleHiHatBeat(int idx, int velocity) {
 }
 
 void handleModeButtons() {
+    boolean isUpShort = false;
+    boolean isUpLong = false;
+    boolean isDownShort = false;
+    boolean isDownLong = false;
     if(digitalRead(UP_BUTTON) == LOW) {
         if (upActive == false) {
             upActive = true;
@@ -179,9 +185,9 @@ void handleModeButtons() {
     } else {
         if (upActive == true) {
             if ((millis()-upTimer) >= LONG_PRESS_SIZE) {
-                upLongPress();
+                isUpLong = true;
             } else {
-                upShortPress();
+                isUpShort = true;
             }
             upActive = false;
             upTimer = 0;
@@ -194,12 +200,10 @@ void handleModeButtons() {
         }    
     } else {
         if (downActive == true) {
-            if ((millis()-downTimer) >= LONG_PRESS_SIZE && (millis()-upTimer) >= LONG_PRESS_SIZE) {
-                doubleLongPress();
-            } else if ((millis()-downTimer) >= LONG_PRESS_SIZE) {
-                downLongPress();
+            if ((millis()-downTimer) >= LONG_PRESS_SIZE) {
+                isDownLong = true;
             } else {
-                downShortPress();
+                isDownShort = true;
             }
             downActive = false;
             downTimer = 0;
@@ -207,6 +211,12 @@ void handleModeButtons() {
             upTimer = 0;
         }
     }
+
+    if (isDownLong == true && isUpLong == true) doubleLongPress();
+    else if (isDownLong == true) downLongPress();
+    else if (isUpLong == true) upLongPress();
+    else if (isDownShort == true) downShortPress();
+    else if (isUpShort == true) upShortPress();
 }
 
 void upLongPress() {
