@@ -137,7 +137,16 @@ void handleHihatAnalogPedal(int idx, int value) {
     if (hihatMode == MODE_HIHAT_CC) {
         sendControlChange(CONF_MATRIX[idx][IDX_NOTE],value);
     } else if (hihatMode == MODE_HIHAT_3P) {
-        //TODO handle foot switch stepped
+        if (lastHiHatPosition < ANALOG_HI_HAT_HIGH_LIMIT && value >= ANALOG_HI_HAT_HIGH_LIMIT ) {
+            //opened
+            analogHiHatOpenedTime = millis();
+        } else if (lastHiHatPosition > ANALOG_HI_HAT_LOW_LIMIT && value <= ANALOG_HI_HAT_LOW_LIMIT) {
+            //closed
+            analogHiHatOpenedTime = millis() - analogHiHatOpenedTime;
+            if (analogHiHatOpenedTime <= ANALOG_HI_HAT_PEDAL_TIME) {
+                noteOn(THREE_PHASE_HIHAT_NOTES[3], 127-int((float(analogHiHatOpenedTime)/float(ANALOG_HI_HAT_PEDAL_TIME))*127.0));
+            }
+        }
     }
     lastHiHatPosition = value;
 }
@@ -149,6 +158,7 @@ void handleHiHatBeat(int idx, int velocity) {
         if (digitalRead(CONF_MATRIX[idx][IDX_SWITCH]) == HIGH) position = 127;
 
         if (position == 0 && lastHiHatPosition!= position ) {
+            //stepped
             noteOn(THREE_PHASE_HIHAT_NOTES[3], 127);
         }
     }
