@@ -1,6 +1,6 @@
 
 /*led, buttons and switches configuration*/
-const unsigned long LONG_PRESS_SIZE = 500;
+const unsigned long LONG_PRESS_SIZE = 3000;
 
 const int UP_BUTTON = 2;
 const int DOWN_BUTTON = 3;
@@ -11,17 +11,32 @@ unsigned long downTimer = 0;
 boolean upActive = false;
 boolean downActive = false;
 
+const boolean USE_PULLUP = true; //trocar aqui
+
 void setup() {
     // Set MIDI baud rate:
     Serial.begin(9600);
     // setup hi_hat switch
     pinMode(LED_PIN, OUTPUT);
-    pinMode(DOWN_BUTTON, INPUT_PULLUP);
-    pinMode(UP_BUTTON, INPUT_PULLUP);
+    if (USE_PULLUP) {
+        pinMode(DOWN_BUTTON, INPUT_PULLUP);
+        pinMode(UP_BUTTON, INPUT_PULLUP);
+    } else {
+        pinMode(DOWN_BUTTON, INPUT);
+        pinMode(UP_BUTTON, INPUT);
+    }
 }
 
 void loop() {
     handleModeButtons();
+}
+
+boolean isButtonPressed(int buttonId) {
+    if (USE_PULLUP) {
+        return digitalRead(buttonId) == LOW;
+    } else {
+        return digitalRead(buttonId) == HIGH;
+    }
 }
 
 void handleModeButtons() {
@@ -29,7 +44,7 @@ void handleModeButtons() {
     boolean isUpLong = false;
     boolean isDownShort = false;
     boolean isDownLong = false;
-    if(digitalRead(UP_BUTTON) == LOW) {
+    if(isButtonPressed (UP_BUTTON)) {
         if (upActive == false) {
             upActive = true;
             upTimer = millis();
@@ -45,7 +60,7 @@ void handleModeButtons() {
             upTimer = 0;
         }
     }
-    if(digitalRead(DOWN_BUTTON) == LOW) {
+    if(isButtonPressed (DOWN_BUTTON)) {
         if (downActive == false) {
             downActive = true;
             downTimer = millis();
