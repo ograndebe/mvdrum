@@ -1,8 +1,9 @@
 
 /*led, buttons and switches configuration*/
+const unsigned long TURBO_PRESS_SIZE = 5000;
+const unsigned long TURBO_INTERVAL = 700;
 const unsigned long LONG_PRESS_SIZE = 3000;
-const unsigned long LONG_HIT_SIZE = 5000;
-const unsigned long HIT_DELAY = 700;
+const unsigned long MIN_PRESS_SIZE = 100;
 
 const int UP_BUTTON = 2;
 const int DOWN_BUTTON = 3;
@@ -10,103 +11,103 @@ const int LED_PIN = LED_BUILTIN; //D13
 
 unsigned long upTimer = 0;
 unsigned long downTimer = 0;
-boolean upActive = false;
-boolean downActive = false;
+
+const boolean USE_PULLUP = true; //trocar aqui
 
 void setup() {
     // Set MIDI baud rate:
     Serial.begin(9600);
     // setup hi_hat switch
     pinMode(LED_PIN, OUTPUT);
-    pinMode(DOWN_BUTTON, INPUT_PULLUP);
-    pinMode(UP_BUTTON, INPUT_PULLUP);
+    if (USE_PULLUP) {
+        pinMode(DOWN_BUTTON, INPUT_PULLUP);
+        pinMode(UP_BUTTON, INPUT_PULLUP);
+    } else {
+        pinMode(DOWN_BUTTON, INPUT);
+        pinMode(UP_BUTTON, INPUT);
+    }
 }
 
 void loop() {
     handleModeButtons();
 }
 
+boolean isButtonPressed(int buttonId) {
+    if (USE_PULLUP) {
+        return digitalRead(buttonId) == LOW;
+    } else {
+        return digitalRead(buttonId) == HIGH;
+    }
+}
+
 void handleModeButtons() {
-    boolean isUpShort = false;
-    boolean isUpLong = false;
-    boolean isDownShort = false;
-    boolean isDownLong = false;
-    boolean isHitUp = false;
-    boolean isHitDown = false;
-    if(digitalRead(UP_BUTTON) == LOW) {
-        if (upActive == false) {
-            upActive = true;
+    if(isButtonPressed (UP_BUTTON)) {
+        if (upTimer == 0) {
             upTimer = millis();
-        } else  {
-            if ((millis()-upTimer)> LONG_HIT_SIZE) {
-                isHitUp = true;
+        } else {
+            if ((millis()-upTimer) > TURBO_PRESS_SIZE) {
+                upShortPress(millis()-upTimer);
+                delay(TURBO_INTERVAL);
             }
         }
     } else {
-        if (upActive == true) {
-            if ((millis()-upTimer) >= LONG_PRESS_SIZE) {
-                isUpLong = true;
-            } else {
-                isUpShort = true;
+        if (upTimer > 0) {
+            int upPressed = millis() - upTimer;
+            if (upPressed >= LONG_PRESS_SIZE && downTimer != 0) {
+                doubleLongPress(upPressed);
+            } else if (upPressed >= LONG_PRESS_SIZE) {
+                upLongPress(upPressed);
+            } else if (upPressed >= MIN_PRESS_SIZE) {
+                upShortPress(upPressed);
             }
-            upActive = false;
             upTimer = 0;
         }
     }
-    if(digitalRead(DOWN_BUTTON) == LOW) {
-        if (downActive == false) {
-            downActive = true;
+    if(isButtonPressed (DOWN_BUTTON)) {
+        if (downTimer == 0) {
             downTimer = millis();
-        } else  {
-            if ((millis()-downTimer)> LONG_HIT_SIZE) {
-                isHitDown = true;
+        } else {
+            if ((millis()-downTimer) > TURBO_PRESS_SIZE) {
+                upShortPress(millis()-downTimer);
+                delay(TURBO_INTERVAL);
             }
         }
     } else {
-        if (downActive == true) {
-            if ((millis()-downTimer) >= LONG_PRESS_SIZE) {
-                isDownLong = true;
-            } else {
-                isDownShort = true;
+        if (downTimer > 0) {
+            int downPressed = millis() - downTimer;
+            if (downPressed >= LONG_PRESS_SIZE && upTimer != 0) {
+                doubleLongPress(downPressed);
+            } else if (downPressed >= LONG_PRESS_SIZE) {
+                downLongPress(downPressed);
+            } else if (downPressed >= MIN_PRESS_SIZE) {
+                downShortPress(downPressed);
             }
-            downActive = false;
             downTimer = 0;
-            upActive = false;
-            upTimer = 0;
         }
     }
-
-    if (isDownLong == true && isUpLong == true) doubleLongPress();
-    else if (isDownLong == true) downLongPress();
-    else if (isUpLong == true) upLongPress();
-    else if (isDownShort == true) downShortPress();
-    else if (isUpShort == true) upShortPress();
-    else if (isHitUp == true) {
-        delay(HIT_DELAY); 
-        upShortPress();
-    } else if (isHitDown == true) {
-        delay(HIT_DELAY); 
-        downShortPress();
-    }
 }
 
-void upLongPress() {
-   Serial.println("upLongPress ");
+void upLongPress(int m) {
+   Serial.print("upLongPress ");
+   Serial.println(m);
 }
 
-void upShortPress() {
-    Serial.println("upShortPress ");
+void upShortPress(int m) {
+    Serial.print("upShortPress ");
+    Serial.println(m);
 }
 
-void downShortPress() {
-    Serial.println("downShortPress ");
+void downShortPress(int m) {
+    Serial.print("downShortPress ");
+    Serial.println(m);
 }
 
-void doubleLongPress() {
-    Serial.println("doubleLongPress ");
+void doubleLongPress(int m) {
+    Serial.print("doubleLongPress ");
+    Serial.println(m);
 }
 
-void downLongPress() {
-    Serial.println("downLongPress ");
+void downLongPress(int m) {
+    Serial.print("downLongPress ");
+    Serial.println(m);
 }
-
