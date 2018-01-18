@@ -45,7 +45,7 @@ void handleModeButtons() {
         if (upTimer == 0) {
             upTimer = millis();
         } else {
-            if ((millis()-upTimer) > TURBO_PRESS_SIZE) {
+            if ((millis()-upTimer) > TURBO_PRESS_SIZE && downTimer == 0) {
                 upShortPress(millis()-upTimer);
                 delay(TURBO_INTERVAL);
             }
@@ -68,7 +68,7 @@ void handleModeButtons() {
         if (downTimer == 0) {
             downTimer = millis();
         } else {
-            if ((millis()-downTimer) > TURBO_PRESS_SIZE) {
+            if ((millis()-downTimer) > TURBO_PRESS_SIZE && upTimer == 0) {
                 downShortPress(millis()-downTimer);
                 delay(TURBO_INTERVAL);
             }
