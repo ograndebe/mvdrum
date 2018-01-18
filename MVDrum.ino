@@ -30,7 +30,7 @@ void handleModeButtons() {
             upTimer = millis();
         } else {
             if ((millis()-upTimer) > TURBO_PRESS_SIZE) {
-                upShortPress(millis()-upTimer);
+                upShortPress();
                 delay(TURBO_INTERVAL);
             }
         }
@@ -94,7 +94,6 @@ const int MIDI_CMD_NOTE_ON = 0x90; //note on channel 01
 const int MIDI_CMD_CC = 0xB0; 
 const int KNOCK_THRESHOLD = 100;  //sensor range 0 to 1023
 const int MAX_MIDI_VELOCITY = 127;
-const unsigned long LONG_PRESS_SIZE = 4000; // milliseconds
 /*Any value between this below will be half hi-hat*/
 const int ANALOG_HI_HAT_LOW_LIMIT = 10;
 const int ANALOG_HI_HAT_HIGH_LIMIT = 117;
