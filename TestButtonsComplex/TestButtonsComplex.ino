@@ -55,12 +55,13 @@ void handleModeButtons() {
             int upPressed = millis() - upTimer;
             if (upPressed >= LONG_PRESS_SIZE && downTimer != 0) {
                 doubleLongPress(upPressed);
-            } else if (upPressed >= LONG_PRESS_SIZE) {
+            } else if (upPressed >= LONG_PRESS_SIZE && upPressed < TURBO_PRESS_SIZE) {
                 upLongPress(upPressed);
             } else if (upPressed >= MIN_PRESS_SIZE) {
                 upShortPress(upPressed);
             }
             upTimer = 0;
+            downTimer = 0;
         }
     }
     if(isButtonPressed (DOWN_BUTTON)) {
@@ -77,12 +78,13 @@ void handleModeButtons() {
             int downPressed = millis() - downTimer;
             if (downPressed >= LONG_PRESS_SIZE && upTimer != 0) {
                 doubleLongPress(downPressed);
-            } else if (downPressed >= LONG_PRESS_SIZE) {
+            } else if (downPressed >= LONG_PRESS_SIZE && downPressed < TURBO_PRESS_SIZE) {
                 downLongPress(downPressed);
             } else if (downPressed >= MIN_PRESS_SIZE) {
                 downShortPress(downPressed);
             }
             downTimer = 0;
+            upTimer = 0;
         }
     }
 }

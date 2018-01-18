@@ -54,6 +54,7 @@ void handleModeButtons() {
                 upShortPress(upPressed);
             }
             upTimer = 0;
+            downTimer = 0;
         }
     }
     if(isButtonPressed (DOWN_BUTTON)) {
@@ -70,6 +71,7 @@ void handleModeButtons() {
             } else if (downPressed >= MIN_PRESS_SIZE) {
                 downShortPress(downPressed);
             }
+            upTimer = 0;
             downTimer = 0;
         }
     }
