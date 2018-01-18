@@ -12,7 +12,7 @@ const int LED_PIN = LED_BUILTIN; //D13
 unsigned long upTimer = 0;
 unsigned long downTimer = 0;
 
-const boolean USE_PULLUP = true; //trocar aqui
+const boolean USE_PULLUP = true; //change here
 
 void setup() {
     // Set MIDI baud rate:
@@ -69,7 +69,7 @@ void handleModeButtons() {
             downTimer = millis();
         } else {
             if ((millis()-downTimer) > TURBO_PRESS_SIZE) {
-                upShortPress(millis()-downTimer);
+                downShortPress(millis()-downTimer);
                 delay(TURBO_INTERVAL);
             }
         }
