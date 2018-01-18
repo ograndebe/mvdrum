@@ -29,20 +29,20 @@ void handleModeButtons() {
         if (upTimer == 0) {
             upTimer = millis();
         } else {
-            if ((millis()-upTimer) > TURBO_PRESS_SIZE) {
-                upShortPress();
+            if ((millis()-upTimer) > TURBO_PRESS_SIZE && downTimer == 0) {
+                upShortPress(millis()-upTimer);
                 delay(TURBO_INTERVAL);
             }
         }
     } else {
         if (upTimer > 0) {
             int upPressed = millis() - upTimer;
-            if (upPressed >= LONG_PRESS_SIZE && downTimer != 0) {
-                doubleLongPress();
+            if (upPressed >= LONG_PRESS_SIZE && downTimer >=LONG_PRESS_SIZE ) {
+                doubleLongPress(upPressed);
             } else if (upPressed >= LONG_PRESS_SIZE && upPressed < TURBO_PRESS_SIZE) {
-                upLongPress();
+                upLongPress(upPressed);
             } else if (upPressed >= MIN_PRESS_SIZE) {
-                upShortPress();
+                upShortPress(upPressed);
             }
             upTimer = 0;
             downTimer = 0;
@@ -52,20 +52,20 @@ void handleModeButtons() {
         if (downTimer == 0) {
             downTimer = millis();
         } else {
-            if ((millis()-downTimer) > TURBO_PRESS_SIZE) {
-                downShortPress();
+            if ((millis()-downTimer) > TURBO_PRESS_SIZE && upTimer == 0) {
+                downShortPress(millis()-downTimer);
                 delay(TURBO_INTERVAL);
             }
         }
     } else {
         if (downTimer > 0) {
             int downPressed = millis() - downTimer;
-            if (downPressed >= LONG_PRESS_SIZE && upTimer != 0) {
-                doubleLongPress();
+            if (downPressed >= LONG_PRESS_SIZE && upTimer >= LONG_PRESS_SIZE) {
+                doubleLongPress(downPressed);
             } else if (downPressed >= LONG_PRESS_SIZE && downPressed < TURBO_PRESS_SIZE) {
-                downLongPress();
+                downLongPress(downPressed);
             } else if (downPressed >= MIN_PRESS_SIZE) {
-                downShortPress();
+                downShortPress(downPressed);
             }
             downTimer = 0;
             upTimer = 0;

@@ -1,8 +1,8 @@
 
 /*led, buttons and switches configuration*/
-const unsigned long TURBO_PRESS_SIZE = 3000;
+const unsigned long TURBO_PRESS_SIZE = 2000;
 const unsigned long TURBO_INTERVAL = 700;
-const unsigned long LONG_PRESS_SIZE = 2000;
+const unsigned long LONG_PRESS_SIZE = 4000;
 const unsigned long MIN_PRESS_SIZE = 100;
 
 const int UP_BUTTON = 2;
@@ -55,9 +55,7 @@ void handleModeButtons() {
             int upPressed = millis() - upTimer;
             if (upPressed >= LONG_PRESS_SIZE && downTimer >=LONG_PRESS_SIZE ) {
                 doubleLongPress(upPressed);
-            } else if (upPressed >= LONG_PRESS_SIZE && upPressed < TURBO_PRESS_SIZE) {
-                upLongPress(upPressed);
-            } else if (upPressed >= MIN_PRESS_SIZE) {
+            } else if (upPressed >= MIN_PRESS_SIZE && upPressed < LONG_PRESS_SIZE) {
                 upShortPress(upPressed);
             }
             upTimer = 0;
@@ -78,9 +76,7 @@ void handleModeButtons() {
             int downPressed = millis() - downTimer;
             if (downPressed >= LONG_PRESS_SIZE && upTimer >= LONG_PRESS_SIZE) {
                 doubleLongPress(downPressed);
-            } else if (downPressed >= LONG_PRESS_SIZE && downPressed < TURBO_PRESS_SIZE) {
-                downLongPress(downPressed);
-            } else if (downPressed >= MIN_PRESS_SIZE) {
+            } else if (downPressed >= MIN_PRESS_SIZE && downPressed < LONG_PRESS_SIZE) {
                 downShortPress(downPressed);
             }
             downTimer = 0;
