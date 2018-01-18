@@ -39,9 +39,7 @@ void handleModeButtons() {
             int upPressed = millis() - upTimer;
             if (upPressed >= LONG_PRESS_SIZE && downTimer >=LONG_PRESS_SIZE ) {
                 doubleLongPress(upPressed);
-            } else if (upPressed >= LONG_PRESS_SIZE && upPressed < TURBO_PRESS_SIZE) {
-                upLongPress(upPressed);
-            } else if (upPressed >= MIN_PRESS_SIZE) {
+            } else if (upPressed >= MIN_PRESS_SIZE && upPressed < LONG_PRESS_SIZE) {
                 upShortPress(upPressed);
             }
             upTimer = 0;
@@ -62,9 +60,7 @@ void handleModeButtons() {
             int downPressed = millis() - downTimer;
             if (downPressed >= LONG_PRESS_SIZE && upTimer >= LONG_PRESS_SIZE) {
                 doubleLongPress(downPressed);
-            } else if (downPressed >= LONG_PRESS_SIZE && downPressed < TURBO_PRESS_SIZE) {
-                downLongPress(downPressed);
-            } else if (downPressed >= MIN_PRESS_SIZE) {
+            } else if (downPressed >= MIN_PRESS_SIZE && downPressed < LONG_PRESS_SIZE) {
                 downShortPress(downPressed);
             }
             downTimer = 0;
@@ -72,6 +68,7 @@ void handleModeButtons() {
         }
     }
 }
+
 
 void setupButtons() {
     if (USE_PULLUP) {
@@ -264,9 +261,6 @@ void handleHiHatBeat(int idx, int velocity) {
     lastPlayedIndex = idx;
 }
 
-void upLongPress() {
-   //none
-}
 
 void upShortPress() {
     if (currentMode == 'L') {
@@ -307,9 +301,6 @@ void doubleLongPress() {
     }
 }
 
-void downLongPress() {
-    //nothing
-}
 
 void noteOn(int pitch, int velocity) {
   Serial.write(MIDI_CMD_NOTE_ON);
