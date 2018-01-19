@@ -239,6 +239,7 @@ void handleHiHatBeat(int idx, int velocity) {
             //stepped
             noteOn(THREE_PHASE_HIHAT_NOTES[3], 127);
         }
+        lastHiHatPosition = position;
     }
     //handle hihat beat indeed
     if (velocity > 0) {
