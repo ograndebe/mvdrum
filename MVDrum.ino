@@ -3,9 +3,9 @@
 
 /*############################# BUTTONS CONTROL ################################*/
 /*led, buttons and switches configuration*/
-const unsigned long TURBO_PRESS_SIZE = 3000;
+const unsigned long TURBO_PRESS_SIZE = 2000;
 const unsigned long TURBO_INTERVAL = 700;
-const unsigned long LONG_PRESS_SIZE = 2000;
+const unsigned long LONG_PRESS_SIZE = 4000;
 const unsigned long MIN_PRESS_SIZE = 100;
 
 const int UP_BUTTON = 2;
