@@ -11,6 +11,7 @@ const int LED_PIN = LED_BUILTIN; //D13
 
 unsigned long upTimer = 0;
 unsigned long downTimer = 0;
+unsigned long currentMillis = 0;
 
 const boolean USE_PULLUP = true; //change here
 
@@ -41,18 +42,19 @@ boolean isButtonPressed(int buttonId) {
 }
 
 void handleModeButtons() {
+    currentMillis = millis();
     if(isButtonPressed (UP_BUTTON)) {
         if (upTimer == 0) {
-            upTimer = millis();
+            upTimer = currentMillis;
         } else {
-            if ((millis()-upTimer) > TURBO_PRESS_SIZE && downTimer == 0) {
-                upShortPress(millis()-upTimer);
+            if ((currentMillis-upTimer) > TURBO_PRESS_SIZE && downTimer == 0) {
+                upShortPress(currentMillis-upTimer);
                 delay(TURBO_INTERVAL);
             }
         }
     } else {
         if (upTimer > 0) {
-            int upPressed = millis() - upTimer;
+            int upPressed = currentMillis - upTimer;
             if (upPressed >= LONG_PRESS_SIZE && downTimer >=LONG_PRESS_SIZE ) {
                 doubleLongPress(upPressed);
             } else if (upPressed >= MIN_PRESS_SIZE && upPressed < LONG_PRESS_SIZE) {
@@ -64,16 +66,16 @@ void handleModeButtons() {
     }
     if(isButtonPressed (DOWN_BUTTON)) {
         if (downTimer == 0) {
-            downTimer = millis();
+            downTimer = currentMillis;
         } else {
-            if ((millis()-downTimer) > TURBO_PRESS_SIZE && upTimer == 0) {
-                downShortPress(millis()-downTimer);
+            if ((currentMillis-downTimer) > TURBO_PRESS_SIZE && upTimer == 0) {
+                downShortPress(currentMillis-downTimer);
                 delay(TURBO_INTERVAL);
             }
         }
     } else {
         if (downTimer > 0) {
-            int downPressed = millis() - downTimer;
+            int downPressed = currentMillis - downTimer;
             if (downPressed >= LONG_PRESS_SIZE && upTimer >= LONG_PRESS_SIZE) {
                 doubleLongPress(downPressed);
             } else if (downPressed >= MIN_PRESS_SIZE && downPressed < LONG_PRESS_SIZE) {

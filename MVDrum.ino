@@ -14,7 +14,7 @@ unsigned long upTimer = 0;
 unsigned long downTimer = 0;
 
 const boolean USE_PULLUP = true; //change here
-
+unsigned long currentMillis = 0;
 
 boolean isButtonPressed(int buttonId) {
     if (USE_PULLUP) {
@@ -25,22 +25,23 @@ boolean isButtonPressed(int buttonId) {
 }
 
 void handleModeButtons() {
+    currentMillis = millis();
     if(isButtonPressed (UP_BUTTON)) {
         if (upTimer == 0) {
-            upTimer = millis();
+            upTimer = currentMillis;
         } else {
-            if ((millis()-upTimer) > TURBO_PRESS_SIZE && downTimer == 0) {
-                upShortPress();
+            if ((currentMillis-upTimer) > TURBO_PRESS_SIZE && downTimer == 0) {
+                upShortPress(currentMillis-upTimer);
                 delay(TURBO_INTERVAL);
             }
         }
     } else {
         if (upTimer > 0) {
-            int upPressed = millis() - upTimer;
+            int upPressed = currentMillis - upTimer;
             if (upPressed >= LONG_PRESS_SIZE && downTimer >=LONG_PRESS_SIZE ) {
-                doubleLongPress();
+                doubleLongPress(upPressed);
             } else if (upPressed >= MIN_PRESS_SIZE && upPressed < LONG_PRESS_SIZE) {
-                upShortPress();
+                upShortPress(upPressed);
             }
             upTimer = 0;
             downTimer = 0;
@@ -48,27 +49,26 @@ void handleModeButtons() {
     }
     if(isButtonPressed (DOWN_BUTTON)) {
         if (downTimer == 0) {
-            downTimer = millis();
+            downTimer = currentMillis;
         } else {
-            if ((millis()-downTimer) > TURBO_PRESS_SIZE && upTimer == 0) {
-                downShortPress();
+            if ((currentMillis-downTimer) > TURBO_PRESS_SIZE && upTimer == 0) {
+                downShortPress(currentMillis-downTimer);
                 delay(TURBO_INTERVAL);
             }
         }
     } else {
         if (downTimer > 0) {
-            int downPressed = millis() - downTimer;
+            int downPressed = currentMillis - downTimer;
             if (downPressed >= LONG_PRESS_SIZE && upTimer >= LONG_PRESS_SIZE) {
-                doubleLongPress();
+                doubleLongPress(downPressed);
             } else if (downPressed >= MIN_PRESS_SIZE && downPressed < LONG_PRESS_SIZE) {
-                downShortPress();
+                downShortPress(downPressed);
             }
             downTimer = 0;
             upTimer = 0;
         }
     }
 }
-
 
 void setupButtons() {
     if (USE_PULLUP) {
@@ -79,7 +79,6 @@ void setupButtons() {
         pinMode(UP_BUTTON, INPUT);
     }
 }
-
 
 /*############################# BUTTONS CONTROL ################################*/
 
@@ -262,7 +261,7 @@ void handleHiHatBeat(int idx, int velocity) {
 }
 
 
-void upShortPress() {
+void upShortPress(int m) {
     if (currentMode == 'L') {
         currentNote = CONF_MATRIX[lastPlayedIndex][IDX_NOTE];
         currentNote++;
@@ -272,7 +271,7 @@ void upShortPress() {
     }
 }
 
-void downShortPress() {
+void downShortPress(int m) {
     if (currentMode == 'L') {
         currentNote = CONF_MATRIX[lastPlayedIndex][IDX_NOTE];
         currentNote--;
@@ -282,7 +281,7 @@ void downShortPress() {
     }
 }
 
-void doubleLongPress() {
+void doubleLongPress(int m) {
     if (currentMode == 'P') {
         currentMode = 'L';
         digitalWrite(LED_PIN, HIGH);
@@ -292,11 +291,11 @@ void doubleLongPress() {
 
         //write current selected notes
         for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
-            EEPROM.update(idx, CONF_MATRIX[idx][IDX_NOTE]+1);
+            EEPROM.put(idx, CONF_MATRIX[idx][IDX_NOTE]+1);
         }
 
         for (int idx = 0; idx < 4; idx++) {
-            EEPROM.update(idx+20, THREE_PHASE_HIHAT_NOTES[idx]+1);
+            EEPROM.put(idx+20, THREE_PHASE_HIHAT_NOTES[idx]+1);
         }
     }
 }
