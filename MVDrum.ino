@@ -38,7 +38,8 @@ void handleModeButtons() {
     } else {
         if (upTimer > 0) {
             int upPressed = currentMillis - upTimer;
-            if (upPressed >= LONG_PRESS_SIZE && downTimer >=LONG_PRESS_SIZE ) {
+            int downPressed = currentMillis - downTimer;
+            if (upPressed >= LONG_PRESS_SIZE && downTimer > 0 && downPressed >=LONG_PRESS_SIZE ) {
                 doubleLongPress(upPressed);
             } else if (upPressed >= MIN_PRESS_SIZE && upPressed < LONG_PRESS_SIZE) {
                 upShortPress(upPressed);
@@ -58,8 +59,9 @@ void handleModeButtons() {
         }
     } else {
         if (downTimer > 0) {
+            int upPressed = currentMillis - upTimer;
             int downPressed = currentMillis - downTimer;
-            if (downPressed >= LONG_PRESS_SIZE && upTimer >= LONG_PRESS_SIZE) {
+            if (downPressed >= LONG_PRESS_SIZE && upTimer > 0 && upPressed >= LONG_PRESS_SIZE) {
                 doubleLongPress(downPressed);
             } else if (downPressed >= MIN_PRESS_SIZE && downPressed < LONG_PRESS_SIZE) {
                 downShortPress(downPressed);
@@ -69,6 +71,7 @@ void handleModeButtons() {
         }
     }
 }
+
 
 void setupButtons() {
     if (USE_PULLUP) {
@@ -97,9 +100,10 @@ const unsigned long ANALOG_HI_HAT_PEDAL_TIME = 500; // milliseconds
 /*############################ PARAMETERS #####################################*/
 
 /*########################### CONSTANTS  ####################################*/
-const int MODE_HIHAT_SWITCH = 1;
-const int MODE_HIHAT_3P     = 2;
-const int MODE_HIHAT_CC     = 3;
+const int MODE_HIHAT_SWITCH    = 1;
+const int MODE_HIHAT_SWITCH_2P = 2;
+const int MODE_HIHAT_3P        = 3;
+const int MODE_HIHAT_CC        = 4;
 
 const int IDX_ANALOG_INPUT      = 0;
 const int IDX_LAST_KNOCK_BUFFER = 1;
@@ -233,7 +237,7 @@ void handleHiHatBeat(int idx, int velocity) {
     //handle switch stepped
     if (hihatMode == MODE_HIHAT_SWITCH) {
         int position = 0;
-        if (digitalRead(CONF_MATRIX[idx][IDX_SWITCH]) == HIGH) position = 127;
+        if (isButtonPressed(digitalRead(CONF_MATRIX[idx][IDX_SWITCH]))) position = 127;
 
         if (position == 0 && lastHiHatPosition!= position ) {
             //stepped

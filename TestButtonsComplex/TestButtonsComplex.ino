@@ -55,7 +55,8 @@ void handleModeButtons() {
     } else {
         if (upTimer > 0) {
             int upPressed = currentMillis - upTimer;
-            if (upPressed >= LONG_PRESS_SIZE && downTimer >=LONG_PRESS_SIZE ) {
+            int downPressed = currentMillis - downTimer;
+            if (upPressed >= LONG_PRESS_SIZE && downTimer > 0 && downPressed >=LONG_PRESS_SIZE ) {
                 doubleLongPress(upPressed);
             } else if (upPressed >= MIN_PRESS_SIZE && upPressed < LONG_PRESS_SIZE) {
                 upShortPress(upPressed);
@@ -75,8 +76,9 @@ void handleModeButtons() {
         }
     } else {
         if (downTimer > 0) {
+            int upPressed = currentMillis - upTimer;
             int downPressed = currentMillis - downTimer;
-            if (downPressed >= LONG_PRESS_SIZE && upTimer >= LONG_PRESS_SIZE) {
+            if (downPressed >= LONG_PRESS_SIZE && upTimer > 0 && upPressed >= LONG_PRESS_SIZE) {
                 doubleLongPress(downPressed);
             } else if (downPressed >= MIN_PRESS_SIZE && downPressed < LONG_PRESS_SIZE) {
                 downShortPress(downPressed);
