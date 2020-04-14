@@ -1,22 +1,20 @@
 #include <EEPROM.h>
-
+#include <RBD_Button.h>
 
 /*############################# BUTTONS CONTROL ################################*/
 /*led, buttons and switches configuration*/
-const unsigned long TURBO_PRESS_SIZE = 2000;
-const unsigned long TURBO_INTERVAL = 700;
-const unsigned long LONG_PRESS_SIZE = 4000;
-const unsigned long MIN_PRESS_SIZE = 100;
-
 const int UP_BUTTON = 2;
 const int DOWN_BUTTON = 3;
-unsigned long upTimer = 0;
-unsigned long downTimer = 0;
+const int EDIT_MODE_SWITCH = 4;
 
 const boolean USE_PULLUP = true; //change here
+
+RBD::Button buttonUp(UP_BUTTON);
+RBD::Button buttonDown(DOWN_BUTTON);
+
 unsigned long currentMillis = 0;
 
-boolean isButtonPressed(int buttonId) {
+boolean isSwitchOn(int buttonId) {
     if (USE_PULLUP) {
         return digitalRead(buttonId) == LOW;
     } else {
@@ -24,62 +22,15 @@ boolean isButtonPressed(int buttonId) {
     }
 }
 
-void handleModeButtons() {
-    currentMillis = millis();
-    if(isButtonPressed (UP_BUTTON)) {
-        if (upTimer == 0) {
-            upTimer = currentMillis;
-        } else {
-            if ((currentMillis-upTimer) > TURBO_PRESS_SIZE && downTimer == 0) {
-                upShortPress(currentMillis-upTimer);
-                delay(TURBO_INTERVAL);
-            }
-        }
-    } else {
-        if (upTimer > 0) {
-            int upPressed = currentMillis - upTimer;
-            int downPressed = currentMillis - downTimer;
-            if (upPressed >= LONG_PRESS_SIZE && downTimer > 0 && downPressed >=LONG_PRESS_SIZE ) {
-                doubleLongPress(upPressed);
-            } else if (upPressed >= MIN_PRESS_SIZE && upPressed < LONG_PRESS_SIZE) {
-                upShortPress(upPressed);
-            }
-            upTimer = 0;
-            downTimer = 0;
-        }
-    }
-    if(isButtonPressed (DOWN_BUTTON)) {
-        if (downTimer == 0) {
-            downTimer = currentMillis;
-        } else {
-            if ((currentMillis-downTimer) > TURBO_PRESS_SIZE && upTimer == 0) {
-                downShortPress(currentMillis-downTimer);
-                delay(TURBO_INTERVAL);
-            }
-        }
-    } else {
-        if (downTimer > 0) {
-            int upPressed = currentMillis - upTimer;
-            int downPressed = currentMillis - downTimer;
-            if (downPressed >= LONG_PRESS_SIZE && upTimer > 0 && upPressed >= LONG_PRESS_SIZE) {
-                doubleLongPress(downPressed);
-            } else if (downPressed >= MIN_PRESS_SIZE && downPressed < LONG_PRESS_SIZE) {
-                downShortPress(downPressed);
-            }
-            downTimer = 0;
-            upTimer = 0;
-        }
-    }
-}
-
-
 void setupButtons() {
     if (USE_PULLUP) {
         pinMode(DOWN_BUTTON, INPUT_PULLUP);
         pinMode(UP_BUTTON, INPUT_PULLUP);
+        pinMode(EDIT_MODE_SWITCH, INPUT_PULLUP);
     } else {
         pinMode(DOWN_BUTTON, INPUT);
         pinMode(UP_BUTTON, INPUT);
+        pinMode(EDIT_MODE_SWITCH, INPUT);
     }
 }
 
@@ -145,14 +96,13 @@ const int LED_PIN = LED_BUILTIN; //D13
 
 /*Variables*/
 int sensorReading = 0;   
-int calcVelocity = 0;
 
 /*HiHat*/
 int lastHiHatPosition = 0;
 unsigned long analogHiHatOpenedTime = 0;
 
-/*Learn Mode*/
-char currentMode = 'P'; // [P]lay [L]earn
+/*Edit Mode*/
+char currentMode = 'P'; // [P]lay [E]dit
 int lastPlayedIndex = 0;
 int currentNote = 0;
 
@@ -173,6 +123,7 @@ void setup() {
             pinMode(CONF_MATRIX[idx][IDX_SWITCH], INPUT_PULLUP);
         }
     }
+    //hihat is saved 20 positions ahead 
     for (int idx = 0; idx < 4; idx++) {
          currentNote = EEPROM.read(idx+20);
          if (currentNote != 0 && currentNote >= 1 && currentNote <= 128) { 
@@ -181,9 +132,30 @@ void setup() {
     }
 }
 
-void loop() {
-    handleModeButtons();
+void changeNoteIdxAndSave(int amount){
+    int noteCurrentIdx = CONF_MATRIX[lastPlayedIndex][IDX_NOTE];
+    noteCurrentIdx = noteCurrentIdx + amount;
+    if (noteCurrentIdx < 0 ) noteCurrentIdx = 127;
+    else if (noteCurrentIdx > 127) noteCurrentIdx = 0;
+    CONF_MATRIX[lastPlayedIndex][IDX_NOTE] = noteCurrentIdx;
+     
+    //storing note index
+    EEPROM.put(lastPlayedIndex, CONF_MATRIX[idx][IDX_NOTE]+1);
+}
 
+void handleEditMode() {
+  if(buttonUp.onReleased()) {
+    changeNoteIdxAndSave(1);
+  }
+  if(buttonDown.onReleased()) {
+    changeNoteIdxAndSave(-1);
+  }
+  handlePlayMode();
+
+}
+
+void handlePlayMode() {
+    int calcVelocity = 0;
     for (int analogInput = 0; analogInput < CONF_MATRIX_SIZE; analogInput++) {
         int type = CONF_MATRIX[analogInput][IDX_TYPE];
         if ( type == TYPE_NORMAL) {
@@ -191,7 +163,7 @@ void loop() {
             if (calcVelocity > 0) {
                 handleNormalPad(analogInput, calcVelocity);
             } 
-            handleChoke(analogInput);
+            //handleChoke(analogInput);
         } else if (type == TYPE_HIHAT_PEDAL){
             calcVelocity = readAnalog(analogInput);
             handleHihatAnalogPedal(analogInput, calcVelocity);
@@ -200,7 +172,14 @@ void loop() {
             handleHiHatBeat(analogInput, calcVelocity);
         }
     }
+}
 
+void loop() {
+    if (isSwitchOn(EDIT_MODE_SWITCH)) {
+        handleEditMode();
+    } else {
+        handlePlayMode();
+    }
 }
 
 void handleNormalPad(int idx, int velocity) {
@@ -263,46 +242,6 @@ void handleHiHatBeat(int idx, int velocity) {
         }
     }
     lastPlayedIndex = idx;
-}
-
-
-void upShortPress(int m) {
-    if (currentMode == 'L') {
-        currentNote = CONF_MATRIX[lastPlayedIndex][IDX_NOTE];
-        currentNote++;
-        if (currentNote > 127) currentNote = 0;
-        CONF_MATRIX[lastPlayedIndex][IDX_NOTE] = currentNote;
-        noteOn(currentNote, MAX_MIDI_VELOCITY);
-    }
-}
-
-void downShortPress(int m) {
-    if (currentMode == 'L') {
-        currentNote = CONF_MATRIX[lastPlayedIndex][IDX_NOTE];
-        currentNote--;
-        if (currentNote < 0) currentNote = 127;
-        CONF_MATRIX[lastPlayedIndex][IDX_NOTE] = currentNote;
-        noteOn(currentNote, MAX_MIDI_VELOCITY);
-    }
-}
-
-void doubleLongPress(int m) {
-    if (currentMode == 'P') {
-        currentMode = 'L';
-        digitalWrite(LED_PIN, HIGH);
-    } else {
-        currentMode = 'P';
-        digitalWrite(LED_PIN, LOW);
-
-        //write current selected notes
-        for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
-            EEPROM.put(idx, CONF_MATRIX[idx][IDX_NOTE]+1);
-        }
-
-        for (int idx = 0; idx < 4; idx++) {
-            EEPROM.put(idx+20, THREE_PHASE_HIHAT_NOTES[idx]+1);
-        }
-    }
 }
 
 
