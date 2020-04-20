@@ -52,7 +52,7 @@ int setLastBufferByIndex(int idx, int value) {
 
 boolean isControlChange(int idx) {
     int cc = CONF_MATRIX[idx][IDX_CONTROL_CHANGE];
-    return cc == 0;
+    return cc == 1;
 }
 
 /* BUFFER AND CONFIGURATION */
