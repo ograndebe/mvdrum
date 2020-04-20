@@ -9,10 +9,8 @@ const int EDIT_MODE_SWITCH = 4;
 
 const boolean USE_PULLUP = true; //change here
 
-RBD::Button buttonUp(UP_BUTTON);
-RBD::Button buttonDown(DOWN_BUTTON);
-
-unsigned long currentMillis = 0;
+RBD::Button buttonUp(UP_BUTTON, USE_PULLUP);
+RBD::Button buttonDown(DOWN_BUTTON, USE_PULLUP);
 
 boolean isSwitchOn(int buttonId) {
     if (USE_PULLUP) {
@@ -151,7 +149,6 @@ void handleEditMode() {
     changeNoteIdxAndSave(-1);
   }
   handlePlayMode();
-
 }
 
 void handlePlayMode() {
