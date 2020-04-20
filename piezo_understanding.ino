@@ -6,9 +6,12 @@ void setup() {
 }
 
 void loop() {
-    seq++;
-    Serial.print(seq);
-    Serial.print(",");
     int reading = analogRead(A0);
-    Serial.println(reading);
+
+    if (reading > 0) {
+        seq++;
+        Serial.print(seq);
+        Serial.print(",");
+        Serial.println(reading);
+    }
 }
