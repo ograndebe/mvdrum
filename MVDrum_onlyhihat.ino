@@ -8,46 +8,66 @@ const int ANALOG_DIRECT_LOW_LIMIT = 100;
 const int ANALOG_DIRECT_HIGH_LIMIT = 1023;
 
 /* BUFFER AND CONFIGURATION */
-const int IDX_ANALOG_INPUT   = 0;
-const int IDX_LAST_BUFFER    = 1;
-const int IDX_NOTE           = 2;
-const int IDX_CONTROL_CHANGE = 3;
 const int CONF_MATRIX_SIZE = 16; 
-int CONF_MATRIX [16][5] {
-//  {IDX_ANALOG_INPUT, IDX_LAST_BUFFER      , IDX_NOTE, IDX_CONTROL_CHANGE
-    {A0              , 0                    , 4       , 1                  },
-    {A1              , 0                    , 105     , 0                  },
-    {A2              , 0                    , 106     , 0                  },
-    {A3              , 0                    , 107     , 0                  },
-    {A4              , 0                    , 108     , 0                  },
-    {A5              , 0                    , 109     , 0                  },
-    {A6              , 0                    , 110     , 0                  },
-    {A7              , 0                    , 111     , 0                  },
-    {A8              , 0                    , 112     , 0                  },
-    {A9              , 0                    , 113     , 0                  },
-    {A10             , 0                    , 114     , 0                  },
-    {A11             , 0                    , 115     , 0                  },
-    {A12             , 0                    , 116     , 0                  },
-    {A13             , 0                    , 117     , 0                  },
-    {A14             , 0                    , 118     , 0                  },
-    {A15             , 0                    , 119     , 0                  }
-};
 
+const int IDX_ANALOG_INPUT    = 0;
+const int IDX_ENABLED         = 1;
+const int IDX_NOTE            = 2;
+const int IDX_CONTROL_CHANGE  = 3;
+const int IDX_MAX_CYCLES      = 4;
+int CONF_MATRIX [16][5] {
+/*  {ANALOG_INPUT, ENABLED , NOTE, CONTROL_CHANGE, MAX_CYCLES */
+    {A0          , 1       , 4   , 1             , 10         },
+    {A1          , 1       , 105 , 0             , 10         },
+    {A2          , 1       , 106 , 0             , 10         },
+    {A3          , 1       , 107 , 0             , 10         },
+    {A4          , 1       , 108 , 0             , 10         },
+    {A5          , 1       , 109 , 0             , 10         },
+    {A6          , 1       , 110 , 0             , 10         },
+    {A7          , 1       , 111 , 0             , 10         },
+    {A8          , 1       , 112 , 0             , 10         },
+    {A9          , 1       , 113 , 0             , 10         },
+    {A10         , 1       , 114 , 0             , 10         },
+    {A11         , 1       , 115 , 0             , 10         },
+    {A12         , 1       , 116 , 0             , 10         },
+    {A13         , 1       , 117 , 0             , 10         },
+    {A14         , 1       , 118 , 0             , 10         },
+    {A15         , 1       , 119 , 0             , 10         }
+};
+const int IDX_LAST_BUFFER     = 0;
+const int IDX_CURRENT_CYCLE   = 1;
+const int IDX_KNOCK_THRESHOLD = 2;
+
+int WORK_MATRIX[16][3] {
+/*  { LAST_BUFFER      , CURRENT_CYCLE, KNOCK_THRESHOLD */
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 },
+    { 0                , 0            , 0 }
+};
 
 int getAnalogByIndex(int idx) {
     return CONF_MATRIX[idx][IDX_ANALOG_INPUT];
 }
 
+boolean isEnabledByIndex(int idx) {
+    return CONF_MATRIX[idx][IDX_ENABLED] == 1;
+}
+
 int getNoteByIndex(int idx) {
     return CONF_MATRIX[idx][IDX_NOTE];
-}
-
-int getLastBufferByIndex(int idx) {
-    return CONF_MATRIX[idx][IDX_LAST_BUFFER];
-}
-
-int setLastBufferByIndex(int idx, int value) {
-    return CONF_MATRIX[idx][IDX_LAST_BUFFER] = value;
 }
 
 boolean isControlChange(int idx) {
@@ -55,10 +75,58 @@ boolean isControlChange(int idx) {
     return cc == 1;
 }
 
+int getMaxCyclesByIndex(int idx) {
+    return CONF_MATRIX[idx][IDX_MAX_CYCLES];
+}
+
+
+int getLastBufferByIndex(int idx) {
+    return WORK_MATRIX[idx][IDX_LAST_BUFFER];
+}
+
+void setLastBufferByIndex(int idx, int value) {
+    WORK_MATRIX[idx][IDX_LAST_BUFFER] = value;
+}
+
+void setCycleByIndex(int idx, int value) {
+    WORK_MATRIX[idx][IDX_CURRENT_CYCLE] = value;
+}
+
+int getCycleByIndex(int idx) {
+    return WORK_MATRIX[idx][IDX_CURRENT_CYCLE];
+}
+
+int getKnockThresholdByIndex(int idx) {
+    return WORK_MATRIX[idx][IDX_KNOCK_THRESHOLD];
+}
+
+void setKnockThresholdByIndex(int idx, int value) {
+    WORK_MATRIX[idx][IDX_KNOCK_THRESHOLD] = value;
+}
+
 /* BUFFER AND CONFIGURATION */
 
 void setup() {
     Serial.begin(31250);
+
+    /*captures the maximum analog read to each*/
+    int interactions = 0;
+    for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
+        if (getMaxCyclesByIndex(idx) > interactions) interactions = getMaxCyclesByIndex(idx);
+    }
+    interactions = interactions * 3;
+
+    for (int i = 0; i < interactions; i++) {
+        for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
+            if (isEnabledByIndex(idx)) {
+                int sensorReading = analogRead(getAnalogByIndex(idx));
+                int current = getKnockThresholdByIndex(idx);
+                if (current < sensorReading) {
+                    setKnockThresholdByIndex(idx, sensorReading+1);
+                }
+            }
+        }
+    }
 }
 
 void loop() {
@@ -75,9 +143,16 @@ void handlePlayMode() {
             }
         } else {
             value = detectKnock(idx);
-            if (value > 0) {
-                sendNoteOn(idx, value);
-            } 
+            int currentCycle = getCycleByIndex(idx);
+            if (currentCycle == 0) {
+                if (value > 0) {
+                    sendNoteOn(idx, value);
+                    setCycleByIndex(idx, getMaxCyclesByIndex(idx));
+                } 
+            } else {
+                currentCycle--;
+                setCycleByIndex(idx, currentCycle);
+            }
         }
     }
 
