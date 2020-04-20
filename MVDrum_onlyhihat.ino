@@ -108,12 +108,6 @@ void midiControlChange(int cc, int value) {
     Serial.write(value);
 }
 
-int readSensor(int analogInputIdx) {
-    int analogInput = getAnalogByIndex(analogInputIdx);
-    int sensorReading = analogRead(analogInput);
-
-}
-
 int detectKnock(int analogInputIdx) {
     int analogInput = getAnalogByIndex(analogInputIdx);
     int sensorReading = analogRead(analogInput);
