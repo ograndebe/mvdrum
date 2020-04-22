@@ -10,8 +10,9 @@ const int ANALOG_DIRECT_HIGH_LIMIT = 1023;
 /* BUFFER AND CONFIGURATION */
 const int CONF_MATRIX_SIZE = 16; 
 
-const int IDX_ANALOG_INPUT    = 0;
-const int IDX_ENABLED         = 1;
+const int     C_ANALOG_INPUT[16] = {A0,   A1,   A2,   A3,   A4,   A5,   A6,   A7,   A8,   A9,   A10,  A11,  A12,  A13,  A14,  A15};
+const boolean C_ENABLED[16]      = {true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true};
+const int     C_NOTE[16]         = {};
 const int IDX_NOTE            = 2;
 const int IDX_CONTROL_CHANGE  = 3;
 const int IDX_MAX_CYCLES      = 4;
@@ -134,14 +135,15 @@ void loop() {
 }
 
 void handlePlayMode() {
+    int value = 0;
     for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
         if (isControlChange(idx)) {
-            int value = analogReading(idx);
+            value = analogReading(idx);
             if (value != -1) {
                 sendControlChange(idx, value);
             }
         } else {
-            int value = detectKnock(idx);
+            value = detectKnock(idx);
             int currentCycle = getCycleByIndex(idx);
             if (currentCycle == 0) {
                 if (value > 0) {
