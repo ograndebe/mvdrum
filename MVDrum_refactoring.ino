@@ -132,7 +132,7 @@ void midiControlChange(int cc, int value) {
         Serial.print("CC ");
         Serial.print(cc);
         Serial.print(" > ");
-        Serial.println(calue);
+        Serial.println(value);
     } else {
         Serial.write(MIDI_CMD_CC);
         Serial.write(cc);
