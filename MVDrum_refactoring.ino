@@ -140,17 +140,25 @@ void midiControlChange(int cc, int value) {
     }
 }
 
+int filteredPiezoReading(int analogInputIdx) {
+    int sensorReading = analogRead(C_ANALOG_INPUT[analogInputIdx]);
+    if (sensorReading >= W_KNOCK_THRESHOLD[analogInputIdx] ) {
+        return sensorReading;
+    }
+    return 0;
+}
+
 int detectKnock(int analogInputIdx) {
-    int analogInput = C_ANALOG_INPUT[analogInputIdx];
-    int sensorReading = analogRead(analogInput);
+    int sensorReading = filteredPiezoReading(analogInputIdx);
     int lastKnock = W_LAST_BUFFER[analogInputIdx];
 
-    W_LAST_BUFFER[analogInputIdx] = sensorReading;// store last reading for knock 
-    if (sensorReading >= W_KNOCK_THRESHOLD[analogInputIdx] && lastKnock < sensorReading) {
+    if (sensorReading > 0 && lastKnock < sensorReading) {
+        W_LAST_BUFFER[analogInputIdx] = sensorReading;// store last reading for knock 
         return int ((float(sensorReading)/1023.0)*127.0); //convert from 0 to 1023 range to 0 to 127 range
     } else {
-        if (lastKnock > 0) {
+        if (W_LAST_BUFFER[analogInputIdx] > 0) {
             W_LAST_BUFFER[analogInputIdx] -= C_DECAY[analogInputIdx];
+
             if (W_LAST_BUFFER[analogInputIdx] <= 0) {
                 W_LAST_BUFFER[analogInputIdx] = 0;
                 sendNoteOff(analogInputIdx);
