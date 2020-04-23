@@ -99,8 +99,12 @@ void sendControlChange(int idx, int value) {
     int control = C_NOTE[idx];
     midiControlChange(control, value);
 }
-
+void sendNoteOff(int idx) {
+    int note = C_NOTE[idx];
+    midiNoteOff(note);
+}
 void midiNoteOn(int pitch, int velocity) {
+    notePlaying++;
     if (DEBUG) {
         Serial.print("NOTE ON ");
         Serial.print(pitch);
@@ -113,6 +117,7 @@ void midiNoteOn(int pitch, int velocity) {
     }
 }
 void midiNoteOff(int pitch) {
+    notePlaying--;
     if (DEBUG) {
         Serial.print("NOTE OFF ");
         Serial.println(pitch);
@@ -142,14 +147,13 @@ int detectKnock(int analogInputIdx) {
 
     W_LAST_BUFFER[analogInputIdx] = sensorReading;// store last reading for knock 
     if (sensorReading >= W_KNOCK_THRESHOLD[analogInputIdx] && lastKnock < sensorReading) {
-        notePlaying++;
         return int ((float(sensorReading)/1023.0)*127.0); //convert from 0 to 1023 range to 0 to 127 range
     } else {
         if (lastKnock > 0) {
             W_LAST_BUFFER[analogInputIdx] -= C_DECAY[analogInputIdx];
-            if (W_LAST_BUFFER[analogInputIdx] < 0) {
+            if (W_LAST_BUFFER[analogInputIdx] <= 0) {
                 W_LAST_BUFFER[analogInputIdx] = 0;
-                notePlaying--;
+                sendNoteOff(analogInputIdx);
             }
         }
         return 0;
