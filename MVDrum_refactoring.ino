@@ -11,14 +11,16 @@ const int NOISE_DETECT_ITERATIONS = 30;
 const int CONF_MATRIX_SIZE = 16; 
 
 const int     C_ANALOG_INPUT[16]   = {A0  ,  A1,    A2,    A3,    A4,    A5,    A6,    A7,    A8,    A9,    A10,   A11,   A12,   A13,   A14,   A15  };
-const boolean C_ENABLED[16]        = {true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true };
+const boolean C_ENABLED[16]        = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true};
 const int     C_NOTE[16]           = {4,     105,   106,   107,   108,   109,   110,   111,   112,   113,   114,   115,   116,   117,   118,   119  };
 const boolean C_CONTROL_CHANGE[16] = {true,  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
 //DECAY = LOWER more sensible HIGHER less sensible
-const int     C_SCAN_TIME[16]      = {100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100  };
-const int     C_DECAY[16]          = {10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10   };
+const int     C_SCAN_TIME[16]      = {50,    50,    50,    50,    50,    50,    50,    50,    50,    50,    50,    50,    50,    50,    50,    50   };
+const int     C_DECAY_TIME[16]     = {100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100  };
 
 int W_LAST_BUFFER[16]              = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
+unsigned long W_DECAY_TERM[16]     = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
+int W_DECAY_START[16]              = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 int W_KNOCK_THRESHOLD[16]          = {1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1    };
 unsigned long W_SCANNING[16]       = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 /* BUFFER AND CONFIGURATION */
@@ -85,10 +87,17 @@ void handlePlayMode() {
 
 }
 
-void sendNoteOn(int idx, int velocity) {
+void sendNoteOn(int idx, int highResVelocity) {
     int note = C_NOTE[idx];
+    int velocity = int ((float(highResVelocity)/1023.0)*127.0); 
     midiNoteOn(note, velocity);
+    notePlaying++;
+    checkLed();
+
+    W_DECAY_TERM[idx] = millis() + C_DECAY_TIME[idx];
+    W_DECAY_START[idx] = highResVelocity;
 }
+
 void sendControlChange(int idx, int value) {
     int control = C_NOTE[idx];
     midiControlChange(control, value);
@@ -96,7 +105,10 @@ void sendControlChange(int idx, int value) {
 void sendNoteOff(int idx) {
     int note = C_NOTE[idx];
     midiNoteOff(note);
+    notePlaying--;
+    checkLed();
 }
+
 void checkLed() {
     if (LED_ON_NOTE_ON) {
         if (notePlaying > 0) {
@@ -108,21 +120,18 @@ void checkLed() {
 }
 
 void midiNoteOn(int pitch, int velocity) {
-    notePlaying++;
     if (DEBUG) {
         Serial.print("NOTE ON ");
         Serial.print(pitch);
-        Serial.print(" > ");
+        Serial.print(" = ");
         Serial.println(velocity);
     } else {
         Serial.write(MIDI_CMD_NOTE_ON);
         Serial.write(pitch);
         Serial.write(velocity);
     }
-    checkLed();
 }
 void midiNoteOff(int pitch) {
-    notePlaying--;
     if (DEBUG) {
         Serial.print("NOTE OFF ");
         Serial.println(pitch);
@@ -131,13 +140,12 @@ void midiNoteOff(int pitch) {
         Serial.write(pitch);
         Serial.write(0);
     }
-    checkLed();
 }
 void midiControlChange(int cc, int value) {
     if (DEBUG) {
         Serial.print("CC ");
         Serial.print(cc);
-        Serial.print(" > ");
+        Serial.print(" = ");
         Serial.println(value);
     } else {
         Serial.write(MIDI_CMD_CC);
@@ -156,10 +164,24 @@ int filteredPiezoReading(int analogInputIdx) {
 
 void decayLastBuffer(int idx) {
     if (W_LAST_BUFFER[idx] > 0) {
-        W_LAST_BUFFER[idx] -= C_DECAY[idx];
-        if (W_LAST_BUFFER[idx] <= 0) {
+        unsigned long millisToCome = W_DECAY_TERM[idx] - millis();
+        if (millisToCome <= 0) {
             W_LAST_BUFFER[idx] = 0;
+            W_DECAY_TERM[idx] = 0;
+            W_DECAY_START[idx] = 0;
             sendNoteOff(idx);
+        } else {
+            float percentage = float(millisToCome)/(float(C_DECAY_TIME[idx]));
+            int goal = W_DECAY_START[idx] * (1.0-percentage);
+            if (goal < W_LAST_BUFFER[idx]) {
+                W_LAST_BUFFER[idx] = goal;
+            }
+            if (goal == 0) {
+                W_LAST_BUFFER[idx] = 0;
+                W_DECAY_TERM[idx] = 0;
+                W_DECAY_START[idx] = 0;
+                sendNoteOff(idx);
+            }
         }
     }
 }
@@ -169,7 +191,7 @@ void detectKnock(int analogInputIdx) {
     unsigned int now = millis();
 
     if (W_SCANNING[analogInputIdx] == 0) {
-        if (sensorReading > W_LAST_BUFFER[analogInputIdx]) {
+        if (sensorReading > 0 && sensorReading > W_LAST_BUFFER[analogInputIdx]) {
             W_SCANNING[analogInputIdx] = now+C_SCAN_TIME[analogInputIdx];
             W_LAST_BUFFER[analogInputIdx] = sensorReading;
         } else {
@@ -178,8 +200,7 @@ void detectKnock(int analogInputIdx) {
     } else if (now < W_SCANNING[analogInputIdx]) {
         if (sensorReading > W_LAST_BUFFER[analogInputIdx]) W_LAST_BUFFER[analogInputIdx] = sensorReading;            
     } else if (now >= W_SCANNING[analogInputIdx]) {
-        int velocity = int ((float(W_LAST_BUFFER[analogInputIdx])/1023.0)*127.0); 
-        sendNoteOn(analogInputIdx, velocity);
+        sendNoteOn(analogInputIdx, W_LAST_BUFFER[analogInputIdx]);
         W_SCANNING[analogInputIdx] = 0;
     }
 }
