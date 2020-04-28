@@ -71,13 +71,15 @@ void loop() {
 
 void handlePlayMode() {
     for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
-        if (C_CONTROL_CHANGE[idx]) {
-            int value = analogReading(idx);
-            if (value != -1) {
-                sendControlChange(idx, value);
+        if (C_ENABLED[idx]) {
+            if (C_CONTROL_CHANGE[idx]) {
+                int value = analogReading(idx);
+                if (value != -1) {
+                    sendControlChange(idx, value);
+                }
+            } else {
+                detectKnock(idx);
             }
-        } else {
-            detectKnock(idx);
         }
     }
 
