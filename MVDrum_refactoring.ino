@@ -19,7 +19,7 @@ const int     C_SCAN_TIME[16]      = {100,   100,   100,   100,   100,   100,   
 const int     C_DECAY[16]          = {10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10   };
 
 int W_LAST_BUFFER[16]              = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
-int W_KNOCK_THRESHOLD[16]          = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
+int W_KNOCK_THRESHOLD[16]          = {1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1    };
 unsigned long W_SCANNING[16]       = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 /* BUFFER AND CONFIGURATION */
 
