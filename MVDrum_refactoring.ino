@@ -15,10 +15,12 @@ const boolean C_ENABLED[16]        = {true,  true,  true,  true,  true,  true,  
 const int     C_NOTE[16]           = {4,     105,   106,   107,   108,   109,   110,   111,   112,   113,   114,   115,   116,   117,   118,   119  };
 const boolean C_CONTROL_CHANGE[16] = {true,  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
 //DECAY = LOWER more sensible HIGHER less sensible
+const int     C_SCAN_TIME[16]      = {100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100  };
 const int     C_DECAY[16]          = {10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10,    10   };
 
 int W_LAST_BUFFER[16]              = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 int W_KNOCK_THRESHOLD[16]          = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
+unsigned long W_SCANNING[16]       = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 /* BUFFER AND CONFIGURATION */
 
 const boolean DEBUG = false;
@@ -75,17 +77,7 @@ void handlePlayMode() {
                 sendControlChange(idx, value);
             }
         } else {
-            int value = detectKnock(idx);
-            if (value > 0) {
-                sendNoteOn(idx, value);
-            } 
-            if (LED_ON_NOTE_ON) {
-                if (notePlaying > 0) {
-                    digitalWrite(LED_PIN, HIGH); 
-                } else {
-                    digitalWrite(LED_PIN, LOW); 
-                }
-            }
+            detectKnock(idx);
         }
     }
 
@@ -103,6 +95,16 @@ void sendNoteOff(int idx) {
     int note = C_NOTE[idx];
     midiNoteOff(note);
 }
+void checkLed() {
+    if (LED_ON_NOTE_ON) {
+        if (notePlaying > 0) {
+            digitalWrite(LED_PIN, HIGH); 
+        } else {
+            digitalWrite(LED_PIN, LOW); 
+        }
+    }
+}
+
 void midiNoteOn(int pitch, int velocity) {
     notePlaying++;
     if (DEBUG) {
@@ -115,6 +117,7 @@ void midiNoteOn(int pitch, int velocity) {
         Serial.write(pitch);
         Serial.write(velocity);
     }
+    checkLed();
 }
 void midiNoteOff(int pitch) {
     notePlaying--;
@@ -126,6 +129,7 @@ void midiNoteOff(int pitch) {
         Serial.write(pitch);
         Serial.write(0);
     }
+    checkLed();
 }
 void midiControlChange(int cc, int value) {
     if (DEBUG) {
@@ -148,23 +152,33 @@ int filteredPiezoReading(int analogInputIdx) {
     return 0;
 }
 
-int detectKnock(int analogInputIdx) {
-    int sensorReading = filteredPiezoReading(analogInputIdx);
-    int lastKnock = W_LAST_BUFFER[analogInputIdx];
-
-    if (sensorReading > 0 && lastKnock < sensorReading) {
-        W_LAST_BUFFER[analogInputIdx] = sensorReading;// store last reading for knock 
-        return int ((float(sensorReading)/1023.0)*127.0); //convert from 0 to 1023 range to 0 to 127 range
-    } else {
-        if (W_LAST_BUFFER[analogInputIdx] > 0) {
-            W_LAST_BUFFER[analogInputIdx] -= C_DECAY[analogInputIdx];
-
-            if (W_LAST_BUFFER[analogInputIdx] <= 0) {
-                W_LAST_BUFFER[analogInputIdx] = 0;
-                sendNoteOff(analogInputIdx);
-            }
+void decayLastBuffer(int idx) {
+    if (W_LAST_BUFFER[idx] > 0) {
+        W_LAST_BUFFER[idx] -= C_DECAY[idx];
+        if (W_LAST_BUFFER[idx] <= 0) {
+            W_LAST_BUFFER[idx] = 0;
+            sendNoteOff(idx);
         }
-        return 0;
+    }
+}
+
+void detectKnock(int analogInputIdx) {
+    int sensorReading = filteredPiezoReading(analogInputIdx);
+    unsigned int now = millis();
+
+    if (W_SCANNING[analogInputIdx] == 0) {
+        if (sensorReading > W_LAST_BUFFER[analogInputIdx]) {
+            W_SCANNING[analogInputIdx] = now+C_SCAN_TIME[analogInputIdx];
+            W_LAST_BUFFER[analogInputIdx] = sensorReading;
+        } else {
+            decayLastBuffer(analogInputIdx);
+        }
+    } else if (now < W_SCANNING[analogInputIdx]) {
+        if (sensorReading > W_LAST_BUFFER[analogInputIdx]) W_LAST_BUFFER[analogInputIdx] = sensorReading;            
+    } else if (now >= W_SCANNING[analogInputIdx]) {
+        int velocity = int ((float(W_LAST_BUFFER[analogInputIdx])/1023.0)*127.0); 
+        sendNoteOn(analogInputIdx, velocity);
+        W_SCANNING[analogInputIdx] = 0;
     }
 }
 
