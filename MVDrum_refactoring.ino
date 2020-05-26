@@ -15,13 +15,13 @@ const boolean C_ENABLED[16]        = {false, false, false, false, false, false, 
 const int     C_NOTE[16]           = {4,     105,   106,   107,   108,   109,   110,   111,   112,   113,   114,   115,   116,   117,   118,   119  };
 const boolean C_CONTROL_CHANGE[16] = {true,  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
 //DECAY = LOWER more sensible HIGHER less sensible
-const int     C_SCAN_TIME[16]      = {50,    50,    50,    50,    50,    50,    50,    50,    50,    50,    50,    50,    50,    50,    50,    50   };
-const int     C_DECAY_TIME[16]     = {100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100,   100  };
+const int     C_SCAN_TIME[16]      = {7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7    };
+const int     C_DECAY_TIME[16]     = {300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300  };
 
 int W_LAST_BUFFER[16]              = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 unsigned long W_DECAY_TERM[16]     = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 int W_DECAY_START[16]              = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
-int W_KNOCK_THRESHOLD[16]          = {1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1    };
+int W_KNOCK_THRESHOLD[16]          = {75,    75,    75,    75,    75,    75,    75,    75,    75,    75,    75,    75,    75,    75,    75,    75   };
 unsigned long W_SCANNING[16]       = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 /* BUFFER AND CONFIGURATION */
 
@@ -43,7 +43,7 @@ void setup() {
     /*captures the maximum analog read to each*/
     for (int i = 0; i < NOISE_DETECT_ITERATIONS; i++) {
         for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
-            if (C_ENABLED[idx]) {
+            if (C_ENABLED[idx] && !C_CONTROL_CHANGE[idx]) {
                 int sensorReading = analogRead(C_ANALOG_INPUT[idx]);
                 int current = W_KNOCK_THRESHOLD[idx];
                 if (current < sensorReading) {

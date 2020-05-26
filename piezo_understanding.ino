@@ -7,7 +7,7 @@ void setup() {
 }
 
 void loop() {
-    int reading = analogRead(A0);
+    int reading = analogRead(A15);
 
     if (reading > min && reading < max) {
         Serial.print(millis());
