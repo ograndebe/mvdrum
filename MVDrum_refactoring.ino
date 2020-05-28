@@ -14,8 +14,8 @@ const int     C_ANALOG_INPUT[16]   = {A0  ,  A1,    A2,    A3,    A4,    A5,    
 const boolean C_ENABLED[16]        = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true};
 const int     C_NOTE[16]           = {4,     105,   106,   107,   108,   109,   110,   111,   112,   113,   114,   115,   116,   117,   118,   119  };
 const boolean C_CONTROL_CHANGE[16] = {true,  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
-//DECAY = LOWER more sensible HIGHER less sensible
 const int     C_SCAN_TIME[16]      = {7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7    };
+//DECAY = LOWER more sensible HIGHER less sensible
 const int     C_DECAY_TIME[16]     = {300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300  };
 
 int W_LAST_BUFFER[16]              = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
@@ -23,6 +23,14 @@ unsigned long W_DECAY_TERM[16]     = {0,     0,     0,     0,     0,     0,     
 int W_DECAY_START[16]              = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 int W_KNOCK_THRESHOLD[16]          = {75,    75,    75,    75,    75,    75,    75,    75,    75,    75,    75,    75,    75,    75,    75,    75   };
 unsigned long W_SCANNING[16]       = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
+int W_CC_MIN[16]                   = {-1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1   };
+int W_CC_MAX[16]                   = {-1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1   };
+
+const int C_CHOKE_MATRIX_SIZE      = 3; 
+const int C_CHOKE_PIN[3]           = {1,     2,     3};
+const int C_CHOKE_NOTE[3]          = {101,   102,   103};
+int       W_CHOKE_LAST_STATE[3]    = {LOW,   LOW,   LOW}; //normally opened
+
 /* BUFFER AND CONFIGURATION */
 
 const boolean DEBUG = false;
@@ -53,6 +61,11 @@ void setup() {
         }
     }
 
+    /*DEFINE CHOKE BUTTON PIN MODE*/
+    for (int idx = 0; idx < C_CHOKE_MATRIX_SIZE; idx++) {
+        pinMode(C_CHOKE_PIN[idx], INPUT);
+    }
+
     if (DEBUG) {
         Serial.println("Startup W_KNOCK_THRESHOLD");
         for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
@@ -69,22 +82,60 @@ void setup() {
 
 void loop() {
     handlePlayMode();
+    handleChoke();
 }
 
 void handlePlayMode() {
     for (int idx = 0; idx < CONF_MATRIX_SIZE; idx++) {
         if (C_ENABLED[idx]) {
             if (C_CONTROL_CHANGE[idx]) {
-                int value = analogReading(idx);
-                if (value != -1) {
-                    sendControlChange(idx, value);
-                }
+                dealWithControlChange(idx);
             } else {
                 detectKnock(idx);
             }
         }
     }
+    
+}
 
+void handleChoke() {
+    for (int idx = 0; idx < C_CHOKE_MATRIX_SIZE; idx++) {
+        int chokeState = digitalRead(C_CHOKE_PIN[idx]);
+        if (chokeState != W_CHOKE_LAST_STATE[idx] && chokeState == HIGH) {
+            midiNoteOn(C_CHOKE_NOTE[idx], 127);
+        }
+        W_CHOKE_LAST_STATE[idx] = chokeState;
+    }
+}
+
+void dealWithControlChange(int idx) {
+    int analogInput = C_ANALOG_INPUT[idx];
+    int sensorReading = analogRead(analogInput);
+
+    /*
+        adjust max and min
+        this adjust due to all hardware and environment variables around the hihat sensor and other types of sensors
+        environment lights, circuit resistors, etc...
+    */
+    if (W_CC_MIN[idx] == -1 || sensorReading < W_CC_MIN[idx]) {
+        W_CC_MIN[idx] = sensorReading;
+    }
+    if (W_CC_MAX[idx] == -1 || sensorReading > W_CC_MAX[idx]) {
+        W_CC_MAX[idx] = sensorReading;
+    }
+
+    int range = W_CC_MAX[idx] - W_CC_MIN[idx];
+    int value = sensorReading - W_CC_MIN[idx];
+    int converted = int((float(value) * 127.0) / float(range));
+
+    int lastConvertedValue = W_LAST_BUFFER[idx];
+
+    W_LAST_BUFFER[idx] = converted; // store last reading 
+
+    if (lastConvertedValue != converted) {
+        int control = C_NOTE[idx];
+        midiControlChange(control, value);
+    }
 }
 
 void sendNoteOn(int idx, int highResVelocity) {
@@ -98,10 +149,7 @@ void sendNoteOn(int idx, int highResVelocity) {
     W_DECAY_START[idx] = highResVelocity;
 }
 
-void sendControlChange(int idx, int value) {
-    int control = C_NOTE[idx];
-    midiControlChange(control, value);
-}
+
 void sendNoteOff(int idx) {
     int note = C_NOTE[idx];
     midiNoteOff(note);
