@@ -13,17 +13,19 @@ const int CONF_MATRIX_SIZE = 16;
 //Pads                                CC     C1     C2     C3     KC     HH     RD     RB     T1     T3     T4     CB     AT     T2     SS     SN
 const int     C_ANALOG_INPUT[16]   = {A0,    A1,    A2,    A3,    A4,    A5,    A6,    A7,    A8,    A9,    A10,   A11,   A12,   A13,   A14,   A15  };
 const boolean C_ENABLED[16]        = {true,  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
-const int     C_NOTE[16]           = {4,     77,    79,    81,    36,    49,    60,    61,    71,    67,    65,    47,    44,    69,    42,   38  };
+const int     C_NOTE[16]           = {4,     77,    79,    81,    36,    49,    60,    61,    71,    67,    65,    47,    44,    69,    42,   38    };
 const boolean C_CONTROL_CHANGE[16] = {true,  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
 const int     C_SCAN_TIME[16]      = {7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7,     7    };
 //DECAY = LOWER more sensible HIGHER less sensible
-const int     C_DECAY_TIME[16]     = {300,    300,  300,  300,   300,   300,   300,   300,   300,   300,   300,   300,    300,    300,   500,  280};
+const int     C_DECAY_TIME[16]     = {300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   300,   500,   280  };
+const int     C_MASK_TIME[16]      = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 
 int W_LAST_BUFFER[16]              = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 unsigned long W_DECAY_TERM[16]     = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 int W_DECAY_START[16]              = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 int W_KNOCK_THRESHOLD[16]          = {1,     100,   100,   1,     1,     1,     1,     1,     1,     1,     1,     100,   100,   100,   80,   20    };
 unsigned long W_SCANNING[16]       = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
+unsigned long W_MASK_MILLIS[16]    = {0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0    };
 int W_CC_MIN[16]                   = {-1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1   };
 int W_CC_MAX[16]                   = {-1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1   };
 
@@ -147,6 +149,7 @@ void sendNoteOn(int idx, int highResVelocity) {
     checkLed();
 
     W_DECAY_TERM[idx] = millis() + C_DECAY_TIME[idx];
+    W_MASK_MILLIS[idx] = millis();
     W_DECAY_START[idx] = highResVelocity;
 }
 
@@ -249,8 +252,11 @@ void detectKnock(int analogInputIdx) {
     } else if (now < W_SCANNING[analogInputIdx]) {
         if (sensorReading > W_LAST_BUFFER[analogInputIdx]) W_LAST_BUFFER[analogInputIdx] = sensorReading;            
     } else if (now >= W_SCANNING[analogInputIdx]) {
-        sendNoteOn(analogInputIdx, W_LAST_BUFFER[analogInputIdx]);
-        W_SCANNING[analogInputIdx] = 0;
+        unsigned long millisPassed = millis() - W_MASK_MILLIS[analogInputIdx];
+        if (millisPassed > C_MASK_TIME[analogInputIdx]) {
+            sendNoteOn(analogInputIdx, W_LAST_BUFFER[analogInputIdx]);
+            W_SCANNING[analogInputIdx] = 0;
+        }
     }
 }
 
