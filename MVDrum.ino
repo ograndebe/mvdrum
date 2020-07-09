@@ -142,15 +142,25 @@ void dealWithControlChange(int idx) {
 }
 
 void sendNoteOn(int idx, int highResVelocity) {
-    int note = C_NOTE[idx];
-    int velocity = int ((float(highResVelocity)/1023.0)*127.0); 
-    midiNoteOn(note, velocity);
-    notePlaying++;
-    checkLed();
+    if (millis() - W_MASK_MILLIS[idx] > C_MASK_TIME[idx] ) {
+        W_MASK_MILLIS[idx] = 0;
+    }
 
-    W_DECAY_TERM[idx] = millis() + C_DECAY_TIME[idx];
-    W_MASK_MILLIS[idx] = millis();
-    W_DECAY_START[idx] = highResVelocity;
+    int note = C_NOTE[idx];
+    if (W_MASK_MILLIS[idx] == 0) {
+        int velocity = int ((float(highResVelocity)/1023.0)*127.0); 
+        midiNoteOn(note, velocity);
+        notePlaying++;
+        checkLed();
+
+        W_DECAY_TERM[idx] = millis() + C_DECAY_TIME[idx];
+        W_MASK_MILLIS[idx] = millis();
+        W_DECAY_START[idx] = highResVelocity;
+    } else if (DEBUG){
+        Serial.print("MASK TIME OBFUSCOU: ");
+        Serial.println(note);
+    }
+
 }
 
 
@@ -252,11 +262,8 @@ void detectKnock(int analogInputIdx) {
     } else if (now < W_SCANNING[analogInputIdx]) {
         if (sensorReading > W_LAST_BUFFER[analogInputIdx]) W_LAST_BUFFER[analogInputIdx] = sensorReading;            
     } else if (now >= W_SCANNING[analogInputIdx]) {
-        unsigned long millisPassed = millis() - W_MASK_MILLIS[analogInputIdx];
-        if (millisPassed > C_MASK_TIME[analogInputIdx]) {
-            sendNoteOn(analogInputIdx, W_LAST_BUFFER[analogInputIdx]);
-            W_SCANNING[analogInputIdx] = 0;
-        }
+        sendNoteOn(analogInputIdx, W_LAST_BUFFER[analogInputIdx]);
+        W_SCANNING[analogInputIdx] = 0;
     }
 }
 
